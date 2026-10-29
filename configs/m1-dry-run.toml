@@ -1,0 +1,62 @@
+# Dry run of m1-small-models: identical players and settings, one match per pairing (about 400 calls, cents).
+# Run this first and check the report's "Cut off" and "Forfeits" columns before the full run.
+# Keep the [[models]] blocks in sync with m1-small-models.toml.
+#
+# Model ids are OpenRouter ids; check https://openrouter.ai/models for current ids and prices
+# before running, and put each model's prices here so the spending cap is accurate.
+# Set OPENROUTER_API_KEY in the environment. Never put a key in this file.
+#
+# Reasoning models count their hidden reasoning against max_tokens, so each one gets an explicit
+# low reasoning effort and a larger max_tokens. Do a dry run first (matches_per_pairing = 1) and
+# check the "Cut off" column of the report is 0% for every model before the full run.
+
+name = "m1-dry-run"
+seed = 20261030
+matches_per_pairing = 1
+end_probability = 0.1
+spending_cap_usd = 1.0
+self_play = true
+
+bots = ["always-cooperate", "always-defect", "tit-for-tat", "grim-trigger", "random"]
+
+[model_defaults]
+temperature = 0.7
+max_tokens = 50
+
+[[models]]
+name = "haiku"
+model = "anthropic/claude-haiku-5.5"
+concurrency = 4
+[models.price]
+input_usd_per_million = 1.00
+output_usd_per_million = 5.00
+
+[[models]]
+name = "gpt-mini"
+model = "openai/gpt-5-mini"
+concurrency = 4
+reasoning = "low"
+max_tokens = 800
+[models.price]
+input_usd_per_million = 0.25
+output_usd_per_million = 2.00
+
+[[models]]
+name = "gemini-flash"
+model = "google/gemini-2.5-flash"
+concurrency = 4
+reasoning = "low"
+max_tokens = 800
+[models.price]
+input_usd_per_million = 0.30
+output_usd_per_million = 2.50
+
+[[models]]
+name = "qwen"
+model = "qwen/qwen3-32b"
+concurrency = 4
+reasoning = "low"
+max_tokens = 800
+[models.price]
+input_usd_per_million = 0.10
+output_usd_per_million = 0.30
