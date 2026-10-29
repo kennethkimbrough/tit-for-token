@@ -80,6 +80,11 @@ def forfeits(side: Side) -> tuple[int, int]:
     return sum("forfeit" in f for f in side.my_flags), len(side.my_moves)
 
 
+def truncated(side: Side) -> tuple[int, int]:
+    """Rounds where an answer was cut off at max_tokens: a configuration problem, not a choice."""
+    return sum("truncated" in f for f in side.my_flags), len(side.my_moves)
+
+
 def fingerprint(side: Side, rule_name: str) -> tuple[int, int]:
     """Share of rounds where the player's move equals what the named bot rule would have played, given the same history."""
     rule = BOT_RULES[rule_name]
@@ -109,16 +114,22 @@ class Estimate:
 
 
 def pooled(stat: Stat, group: list) -> float:
+    """``group`` holds units; a unit is one item or a list of items (the sides of one match)."""
     num = den = 0
-    for s in group:
-        n, d = stat(s)
-        num += n
-        den += d
+    for unit in group:
+        for item in unit if isinstance(unit, list) else [unit]:
+            n, d = stat(item)
+            num += n
+            den += d
     return num / den if den else float("nan")
 
 
 def estimate(stat: Stat, group: list, reps: int = 1000, seed: int = 0, level: float = 0.95) -> Estimate:
-    """Pooled value over the group, with a bootstrap percentile interval from resampling matches."""
+    """Pooled value over the group, with a bootstrap percentile interval from resampling units.
+
+    A unit is a match: in a self-play match the same player holds both sides,
+    and they are resampled together so the interval is not falsely narrow.
+    """
     value = pooled(stat, group)
     if not group or value != value:
         return Estimate(float("nan"), float("nan"), float("nan"), len(group))
@@ -149,15 +160,21 @@ class PlayerSummary:
     fingerprints: dict[str, Estimate]
     retried: Estimate
     forfeits: Estimate
+    truncated: Estimate
 
 
 def summarize_players(matches: list[MatchRecord], reps: int = 1000) -> list[PlayerSummary]:
-    by_player: dict[str, list[Side]] = defaultdict(list)
-    for s in sides(matches):
-        by_player[s.player].append(s)
+    # One bootstrap unit per (player, match): a list of that player's sides in the match,
+    # which has two entries when the player played itself.
+    units: dict[str, dict[str, list[Side]]] = defaultdict(lambda: defaultdict(list))
+    for m in matches:
+        for s in sides([m]):
+            units[s.player][m.match_id].append(s)
     out = []
-    for name, group in by_player.items():
-        vs_ac = [s for s in group if s.opponent == "always-cooperate"]
+    for name, by_match in units.items():
+        group = list(by_match.values())
+        vs_ac = [[s for s in unit if s.opponent == "always-cooperate"] for unit in group]
+        vs_ac = [u for u in vs_ac if u]
         out.append(
             PlayerSummary(
                 player=name,
@@ -170,10 +187,27 @@ def summarize_players(matches: list[MatchRecord], reps: int = 1000) -> list[Play
                 fingerprints={r: estimate(lambda s, r=r: fingerprint(s, r), group, reps) for r in BOT_RULES},
                 retried=estimate(retried, group, reps),
                 forfeits=estimate(forfeits, group, reps),
+                truncated=estimate(truncated, group, reps),
             )
         )
     out.sort(key=lambda p: -p.payoff.value if p.payoff.value == p.payoff.value else 0)
     return out
+
+
+#: Above this forfeit rate a player's other numbers are not worth reading: forfeits are recorded as B.
+FORFEIT_WARNING_RATE = 0.02
+
+
+def validity_warnings(players: list[PlayerSummary]) -> list[str]:
+    warnings = []
+    for p in players:
+        if p.forfeits.value == p.forfeits.value and p.forfeits.value > FORFEIT_WARNING_RATE:
+            cause = "cut off at max_tokens" if p.truncated.value > 0 else "not answering in the required format"
+            warnings.append(
+                f"{p.player} forfeited {100 * p.forfeits.value:.1f}% of rounds ({cause}). Forfeits are recorded as B, "
+                "so its cooperation and payoff numbers are not valid; fix the configuration and rerun."
+            )
+    return warnings
 
 
 def mutual_cooperation(matches: list[MatchRecord], reps: int = 1000) -> dict[tuple[str, str], Estimate]:
@@ -205,14 +239,16 @@ def markdown_report(matches: list[MatchRecord], reps: int = 1000) -> str:
     n_rounds = sum(len(m.rounds) for m in matches)
     lines.append(f"{len(matches)} matches, {n_rounds} rounds, {len(names)} players. "
                  "Brackets are 95% bootstrap intervals over matches.\n")
+    for w in validity_warnings(players):
+        lines.append(f"> **Warning:** {w}\n")
 
-    lines.append("| Player | Matches | Payoff/round | Cooperation | Retaliation | Forgiveness | vs Always Cooperate | Retried | Forfeits |")
-    lines.append("|---|---|---|---|---|---|---|---|---|")
+    lines.append("| Player | Matches | Payoff/round | Cooperation | Retaliation | Forgiveness | vs Always Cooperate | Retried | Forfeits | Cut off |")
+    lines.append("|---|---|---|---|---|---|---|---|---|---|")
     for p in players:
         lines.append(
             f"| {p.player} | {p.matches} | {p.payoff.fmt(pct=False)} | {p.cooperation.fmt()} | "
             f"{p.retaliation.fmt()} | {p.forgiveness.fmt()} | {p.vs_always_cooperate.fmt(pct=False)} | "
-            f"{p.retried.fmt()} | {p.forfeits.fmt()} |"
+            f"{p.retried.fmt()} | {p.forfeits.fmt()} | {p.truncated.fmt()} |"
         )
 
     lines.append("\nFingerprint: share of rounds where the player's move matches each classic rule, given the same history.\n")
