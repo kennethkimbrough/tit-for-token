@@ -77,6 +77,7 @@ class PlayerFactory:
                 transport=self._transports[spec.name],
                 temperature=spec.temperature if spec.temperature is not None else self._config.temperature,
                 max_tokens=spec.max_tokens if spec.max_tokens is not None else self._config.max_tokens,
+                reasoning=spec.reasoning,
             )
         bot = bot_by_name(name)
         if isinstance(bot, RandomBot):
@@ -99,12 +100,13 @@ def build_transports(
         def live_factory(spec: ModelSpec) -> Transport:
             return OpenRouterTransport()
 
-    per_provider: dict[str, ThrottledTransport] = {}
+    per_provider: dict[str, Transport] = {}
     transports: dict[str, Transport] = {}
     for spec in config.models:
         if spec.provider not in per_provider:
-            per_provider[spec.provider] = ThrottledTransport(RetryingTransport(live_factory(spec)), spec.concurrency)
-        budgeted = BudgetedTransport(per_provider[spec.provider], budget, spec.price)
+            per_provider[spec.provider] = RetryingTransport(live_factory(spec))
+        throttled = ThrottledTransport(per_provider[spec.provider], spec.concurrency)  # a limit per model
+        budgeted = BudgetedTransport(throttled, budget, spec.price)
         transports[spec.name] = RecordingTransport(budgeted, recording)
     return transports
 

@@ -120,9 +120,17 @@ def test_replay_fails_loudly_when_the_recording_is_incomplete(tmp_path):
         asyncio.run(run_tournament(c, tmp_path / "r", replay=True, recording_path=tmp_path / "empty.jsonl", log=lambda *a: None))
 
 
-def test_build_transports_groups_by_provider(tmp_path):
-    c = cfg()
+def test_build_transports_shares_a_client_per_provider_but_throttles_per_model(tmp_path):
+    c = cfg(models=[
+        {"name": "m1", "model": "fake/one", "concurrency": 1},
+        {"name": "m2", "model": "fake/two", "concurrency": 3},
+        {"name": "m3", "model": "fake/three", "provider": "other"},
+    ])
     made = []
     transports = build_transports(c, Recording(tmp_path / "c.jsonl"), False, Budget(1.0), live_factory=lambda s: made.append(s) or ExplodingTransport())
-    assert set(transports) == {"m1", "m2"}
-    assert [s.name for s in made] == ["m1", "m2"], "one raw transport per provider"
+    assert set(transports) == {"m1", "m2", "m3"}
+    assert [s.name for s in made] == ["m1", "m3"], "one raw client per provider"
+    throttles = {name: t._inner._inner for name, t in transports.items()}  # Recording -> Budgeted -> Throttled
+    assert throttles["m1"] is not throttles["m2"], "each model has its own concurrency limit"
+    assert throttles["m1"]._sem._value == 1 and throttles["m2"]._sem._value == 3
+    assert throttles["m1"]._inner is throttles["m2"]._inner, "and shares the provider's retrying client"
