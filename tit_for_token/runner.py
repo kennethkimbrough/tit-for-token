@@ -144,7 +144,7 @@ async def run_tournament(
     replay: bool = False,
     recording_path: Path | None = None,
     live_factory=None,
-    parallel_matches: int = 8,
+    parallel_matches: int | None = None,
     log=print,
 ) -> RunResult:
     out_dir = Path(out_dir)
@@ -162,7 +162,7 @@ async def run_tournament(
         + (" (replay)" if replay else ""))
 
     write_lock = asyncio.Lock()
-    gate = asyncio.Semaphore(parallel_matches)
+    gate = asyncio.Semaphore(parallel_matches or config.parallel_matches)
     stop = asyncio.Event()
     stopped_reason = ""
 
@@ -183,6 +183,9 @@ async def run_tournament(
                 return
             async with write_lock:
                 done[mid] = rec
+                finished = len(done) - (total - len(todo))
+                if finished % 25 == 0 or finished == len(todo):
+                    log(f"  {finished}/{len(todo)} matches played, ${budget.spent:.4f} spent")
                 with matches_path.open("a", encoding="utf-8") as f:
                     f.write(json.dumps(rec.to_dict(), sort_keys=True) + "\n")
 

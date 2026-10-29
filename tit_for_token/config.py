@@ -34,6 +34,7 @@ class TournamentConfig:
     temperature: float = 0.7
     max_tokens: int = 50
     self_play: bool = True
+    parallel_matches: int = 16
     source: dict = field(default_factory=dict, compare=False)
 
     @property
@@ -47,6 +48,8 @@ class TournamentConfig:
         for n in names:
             if not n or "/" in n or "--" in n or any(c.isspace() for c in n):
                 raise ValueError(f"player name {n!r} may not contain '/', '--' or whitespace")
+        if self.parallel_matches < 1:
+            raise ValueError("parallel_matches must be at least 1")
         if self.matches_per_pairing < 1:
             raise ValueError("matches_per_pairing must be at least 1")
         if self.spending_cap_usd < 0:
@@ -88,6 +91,7 @@ def config_from_dict(raw: dict) -> TournamentConfig:
         temperature=float(defaults.get("temperature", 0.7)),
         max_tokens=int(defaults.get("max_tokens", 50)),
         self_play=bool(raw.get("self_play", True)),
+        parallel_matches=int(raw.get("parallel_matches", 16)),
         source=raw,
     )
     cfg.validate()
