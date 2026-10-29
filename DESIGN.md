@@ -38,6 +38,16 @@ Decisions and why:
 - **Malformed answers.** One retry with a short reminder of the format. A
   second failure is a forfeit, recorded as defect and flagged. The
   malformed-answer rate per model is a reported metric.
+- **Reasoning models.** Providers count hidden reasoning against
+  `max_tokens`, and a model whose reasoning uses the whole budget returns an
+  empty answer. That would be recorded as a forfeit, i.e. as defection, and
+  would make reasoning models look uncooperative for a configuration reason.
+  So the reasoning effort is set explicitly per model (and is part of the
+  recording key), an answer cut off at `max_tokens` carries its own
+  "truncated" flag, and the report refuses to present a player's numbers as
+  valid when its forfeit rate is above 2%, naming the cause. A dry run with
+  one match per pairing checks the cut-off rate is zero before money is
+  spent on the full run.
 - **Sampling.** Fixed temperature and settings per model, recorded with every
   call.
 
@@ -106,8 +116,9 @@ recording is the source of truth, not the model.
 - Round-robin: every pair of players plays N matches (and each model also
   plays itself), each with its own seed derived from the tournament seed and
   the pairing, so results don't depend on scheduling order.
-- Concurrency: an `asyncio` semaphore per provider, exponential backoff with
-  jitter on rate limits and server errors.
+- Concurrency: an `asyncio` semaphore per model (each model has its own rate
+  limit at the provider), exponential backoff with jitter on rate limits and
+  server errors.
 - Spending cap: estimated cost from token counts is checked before each call;
   the run stops cleanly when the cap would be exceeded.
 - Resume: completed matches are written as they finish, keyed by match id; a
@@ -127,8 +138,10 @@ Per player, over all its matches:
 - malformed-answer rate
 
 Confidence intervals by bootstrap over matches (not rounds, since rounds in a
-match are not independent). Report 95% intervals; call two players different
-only when the intervals say so.
+match are not independent). When a model plays itself, both of its sides come
+from one match and are resampled together, so self-play does not narrow the
+interval falsely. Report 95% intervals; call two players different only when
+the intervals say so.
 
 ## Milestone 1 (done means all of these are true)
 

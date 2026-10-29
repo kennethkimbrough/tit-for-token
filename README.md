@@ -33,7 +33,11 @@ Players are classic bots (Always Cooperate, Always Defect, Tit-for-Tat, Grim
 Trigger, seeded Random) and language models reached through one OpenRouter
 key. A model answers each round with `{"move": "A"}` or `{"move": "B"}`; a
 malformed answer gets one retry with a reminder, and a second failure is a
-forfeit (recorded as B and flagged). The retry and forfeit rates are reported.
+forfeit (recorded as B and flagged). Reasoning models get an explicit
+reasoning effort, an answer cut off at `max_tokens` is flagged separately, and
+the report marks a player's numbers invalid if it forfeits more than 2% of
+rounds, since a forfeit counts as B. The retry, forfeit and cut-off rates are
+all reported.
 
 Every model call is recorded, keyed by the request content plus a tag naming
 the call (match, seat, round, attempt), so each call is its own sample and a
@@ -59,7 +63,7 @@ Python 3.11+, no runtime dependencies.
 
 ```sh
 pip install -e ".[dev]"
-pytest                                   # 37 tests, no network
+pytest                                   # 41 tests, no network
 
 export OPENROUTER_API_KEY=...            # never goes in a file
 python -m tit_for_token run configs/m1-small-models.toml
@@ -75,8 +79,10 @@ match.
 
 Before a live run, check the model ids and prices in the config against
 [openrouter.ai/models](https://openrouter.ai/models): the prices feed the
-spending cap. `configs/m1-small-models.toml` (four small models from
-different labs, five bots, ten matches per pairing) is about 4,000 calls.
+spending cap. Then do a dry run with `matches_per_pairing = 1` (about 400
+calls) and check the report's "Cut off" column is 0% for every model.
+`configs/m1-small-models.toml` (four small models from different labs, five
+bots, ten matches per pairing) is about 4,000 calls.
 
 ## Layout
 

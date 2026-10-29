@@ -3,12 +3,16 @@
 # Model ids are OpenRouter ids; check https://openrouter.ai/models for current ids and prices
 # before running, and put each model's prices here so the spending cap is accurate.
 # Set OPENROUTER_API_KEY in the environment. Never put a key in this file.
+#
+# Reasoning models count their hidden reasoning against max_tokens, so each one gets an explicit
+# low reasoning effort and a larger max_tokens. Do a dry run first (matches_per_pairing = 1) and
+# check the "Cut off" column of the report is 0% for every model before the full run.
 
 name = "m1-small-models"
 seed = 20261030
 matches_per_pairing = 10
 end_probability = 0.1
-spending_cap_usd = 5.0
+spending_cap_usd = 10.0   # the reasoning models make this a few dollars; the cap stops the run cleanly if the prices are off
 self_play = true
 
 bots = ["always-cooperate", "always-defect", "tit-for-tat", "grim-trigger", "random"]
@@ -29,6 +33,8 @@ output_usd_per_million = 5.00
 name = "gpt-mini"
 model = "openai/gpt-5-mini"
 concurrency = 4
+reasoning = "low"
+max_tokens = 800
 [models.price]
 input_usd_per_million = 0.25
 output_usd_per_million = 2.00
@@ -37,6 +43,8 @@ output_usd_per_million = 2.00
 name = "gemini-flash"
 model = "google/gemini-2.5-flash"
 concurrency = 4
+reasoning = "low"
+max_tokens = 800
 [models.price]
 input_usd_per_million = 0.30
 output_usd_per_million = 2.50
@@ -45,6 +53,8 @@ output_usd_per_million = 2.50
 name = "qwen"
 model = "qwen/qwen3-32b"
 concurrency = 4
+reasoning = "low"
+max_tokens = 800
 [models.price]
 input_usd_per_million = 0.10
 output_usd_per_million = 0.30
