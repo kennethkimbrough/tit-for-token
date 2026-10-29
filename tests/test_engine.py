@@ -118,3 +118,24 @@ def test_record_round_trips_through_dict():
     again = MatchRecord.from_dict(rec.to_dict())
     assert again.to_dict() == rec.to_dict()
     assert again.rounds[0].flags == (("retried",), ())
+
+
+def test_both_players_are_asked_at_the_same_time():
+    import asyncio as aio
+
+    in_flight = {"now": 0, "peak": 0}
+
+    class Slow:
+        def __init__(self, name):
+            self.name = name
+
+        async def move(self, view):
+            in_flight["now"] += 1
+            in_flight["peak"] = max(in_flight["peak"], in_flight["now"])
+            await aio.sleep(0.001)
+            in_flight["now"] -= 1
+            return Decision("A")
+
+    rec = aio.run(play_match("m", Slow("x"), Slow("y"), seed=2, rules=Rules(end_probability=0.5)))
+    assert in_flight["peak"] == 2, "the two moves of a round overlap"
+    assert rec.scores == (3 * rec.length, 3 * rec.length)

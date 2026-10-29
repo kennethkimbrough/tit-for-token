@@ -6,6 +6,7 @@ Everything here is pure: no I/O, no network. Players are only called through the
 
 from __future__ import annotations
 
+import asyncio
 import hashlib
 import random
 from dataclasses import dataclass, field
@@ -177,8 +178,8 @@ async def play_match(
     for round_number in range(1, record.length + 1):
         view_first = MatchView(rules, match_id, 0, round_number, tuple(first_moves), tuple(second_moves))
         view_second = MatchView(rules, match_id, 1, round_number, tuple(second_moves), tuple(first_moves))
-        d1 = await first.move(view_first)
-        d2 = await second.move(view_second)
+        # Moves are simultaneous, so both players are asked at once; neither view contains this round.
+        d1, d2 = await asyncio.gather(first.move(view_first), second.move(view_second))
         first_moves.append(d1.move)
         second_moves.append(d2.move)
         record.rounds.append(Round(moves=(d1.move, d2.move), flags=(d1.flags, d2.flags)))
