@@ -87,9 +87,14 @@ Model APIs are not fully deterministic, even at temperature 0, so the
 recording is the source of truth, not the model.
 
 - The request key is a hash of everything that determines the request: model
-  id, sampling settings, and the exact messages. The response is stored with
-  token counts and latency.
-- `--record` makes live calls and appends to the recording.
+  id, sampling settings, the exact messages, and a tag naming the call (match,
+  seat, round, attempt). The tag matters: without it every match's first
+  round, which has an identical prompt, would share one recorded answer, and a
+  model playing itself would get the same answer on both sides. Each call is
+  its own sample. The response is stored with token counts and latency.
+- Live mode answers from the recording when the call is already there and
+  makes a live call otherwise, appending it. That is what makes a resumed run
+  free for the matches that already happened.
 - `--replay` makes no network calls; a request missing from the recording is
   an error, never a silent live call.
 - A test runs a small tournament live against a fake model, then replays it
@@ -135,7 +140,7 @@ only when the intervals say so.
 4. Round-robin runner with per-provider concurrency, backoff, spending cap
    and resume.
 5. One committed tournament (four models plus five bots, ten matches per
-   pairing, about 3,000 model calls, expected to cost a dollar or two with
+   pairing, about 4,000 model calls, expected to cost a few dollars with
    small models) with a results table and confidence intervals in the README.
 6. GitHub Actions running the tests and the replay check.
 
