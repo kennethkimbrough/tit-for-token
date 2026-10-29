@@ -1,0 +1,51 @@
+name: Tournament
+
+# Runs a tournament live on GitHub's machines, using the OPENROUTER_API_KEY repository secret,
+# so the key never has to exist anywhere else. Started by hand from the Actions tab.
+# The run directory (recording, matches, report) is uploaded as an artifact for review;
+# nothing is committed automatically.
+
+on:
+  workflow_dispatch:
+    inputs:
+      config:
+        description: "Tournament config"
+        required: true
+        default: "configs/m1-dry-run.toml"
+
+permissions:
+  contents: read
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -e .
+      - name: Play the tournament
+        env:
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+          CONFIG: ${{ inputs.config }}
+        run: |
+          if [ -z "$OPENROUTER_API_KEY" ]; then
+            echo "::error::Add the OPENROUTER_API_KEY repository secret first."
+            exit 1
+          fi
+          python -m tit_for_token run "$CONFIG" --out run
+      - name: Report
+        if: always()
+        run: |
+          if [ -f run/matches.jsonl ]; then
+            { echo '```'; cat run/run.json; echo '```'; python -m tit_for_token report run --reps 1000; } | tee run/report.md >> "$GITHUB_STEP_SUMMARY"
+          fi
+      - name: Upload the run directory
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: tournament-run
+          path: run/
+          if-no-files-found: ignore
