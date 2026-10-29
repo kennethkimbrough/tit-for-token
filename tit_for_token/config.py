@@ -19,6 +19,7 @@ class ModelSpec:
     concurrency: int = 4
     temperature: float | None = None  # None = tournament default
     max_tokens: int | None = None
+    reasoning: str | None = None  # reasoning effort for models that reason; None sends nothing
 
 
 @dataclass(frozen=True)
@@ -73,6 +74,7 @@ def config_from_dict(raw: dict) -> TournamentConfig:
                 concurrency=int(m.get("concurrency", 4)),
                 temperature=m.get("temperature"),
                 max_tokens=m.get("max_tokens"),
+                reasoning=m.get("reasoning"),
             )
         )
     cfg = TournamentConfig(

@@ -77,12 +77,14 @@ class ModelPlayer:
         transport: Transport,
         temperature: float = 0.7,
         max_tokens: int = 50,
+        reasoning: str | None = None,
     ) -> None:
         self.name = name
         self.model = model
         self._transport = transport
         self._temperature = temperature
         self._max_tokens = max_tokens
+        self._reasoning = reasoning
 
     def _request(self, messages: list[tuple[str, str]], view: MatchView, attempt: int) -> CompletionRequest:
         return CompletionRequest(
@@ -91,9 +93,19 @@ class ModelPlayer:
             temperature=self._temperature,
             max_tokens=self._max_tokens,
             tag=f"{view.match_id}/seat{view.seat}/round{view.round_number}/attempt{attempt}",
+            reasoning=self._reasoning,
         )
 
     async def move(self, view: MatchView) -> Decision:
+        """One call; on a bad answer, one retry with a reminder; then a forfeit.
+
+        Flags tell the analysis what happened: "retried" (the second answer was
+        used), "forfeit" (recorded as B because neither answer was usable), and
+        "truncated" (an answer was cut off at max_tokens, which usually means
+        the model's reasoning used the whole budget). A truncated forfeit is a
+        configuration problem, not a choice the model made, and the report
+        says so.
+        """
         messages = [("system", system_prompt(view)), ("user", round_prompt(view))]
         first = await self._transport.complete(self._request(messages, view, 0))
         move = parse_move(first.text)
@@ -103,6 +115,7 @@ class ModelPlayer:
         messages += [("assistant", first.text), ("user", REMINDER)]
         second = await self._transport.complete(self._request(messages, view, 1))
         move = parse_move(second.text)
+        truncated = ("truncated",) if (first.truncated or second.truncated) else ()
         if move is not None:
-            return Decision(move, flags=("retried",))
-        return Decision(DEFECT, flags=("forfeit",))
+            return Decision(move, flags=("retried",) + truncated)
+        return Decision(DEFECT, flags=("forfeit",) + truncated)

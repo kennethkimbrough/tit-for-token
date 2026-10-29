@@ -32,9 +32,18 @@ def test_request_key_covers_content_and_tag():
 
 
 def test_parse_openai_style():
-    payload = {"choices": [{"message": {"content": "hi"}}], "usage": {"prompt_tokens": 7, "completion_tokens": 2}}
+    payload = {"choices": [{"message": {"content": "hi"}, "finish_reason": "stop"}],
+               "usage": {"prompt_tokens": 7, "completion_tokens": 2}}
     r = parse_openai_style(payload, 123)
     assert (r.text, r.prompt_tokens, r.completion_tokens, r.latency_ms) == ("hi", 7, 2, 123)
+    assert r.finish_reason == "stop" and not r.truncated
+
+    cut = {"choices": [{"message": {"content": ""}, "finish_reason": "length"}],
+           "usage": {"prompt_tokens": 7, "completion_tokens": 50, "completion_tokens_details": {"reasoning_tokens": 50}}}
+    r = parse_openai_style(cut, 1)
+    assert r.truncated and r.reasoning_tokens == 50
+    assert CompletionResponse.from_dict(r.to_dict()) == r
+    assert CompletionResponse.from_dict({"text": "x", "prompt_tokens": 1, "completion_tokens": 1, "latency_ms": 1}).finish_reason == ""
     with pytest.raises(TransportError):
         parse_openai_style({"error": {"message": "bad key"}}, 1)
     with pytest.raises(TransportError):

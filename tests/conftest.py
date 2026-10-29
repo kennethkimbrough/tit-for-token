@@ -21,11 +21,12 @@ class FakeModelTransport:
     times before answering, to exercise backoff.
     """
 
-    def __init__(self, malformed_every: int = 0, stubborn: bool = False, fail_first: int = 0) -> None:
+    def __init__(self, malformed_every: int = 0, stubborn: bool = False, fail_first: int = 0, truncate: bool = False) -> None:
         self.calls = 0
         self.failures_left = fail_first
         self.malformed_every = malformed_every
         self.stubborn = stubborn
+        self.truncate = truncate  # answer like a reasoning model that spent its whole budget thinking
         self.seen: list[CompletionRequest] = []
 
     async def complete(self, request: CompletionRequest) -> CompletionResponse:
@@ -35,6 +36,9 @@ class FakeModelTransport:
             self.failures_left -= 1
             raise TransportError("HTTP 429", retryable=True, status=429)
         role, content = request.messages[-1]
+        if self.truncate:
+            return CompletionResponse(text="", prompt_tokens=len(content) // 4, completion_tokens=request.max_tokens,
+                                      latency_ms=5, finish_reason="length", reasoning_tokens=request.max_tokens)
         if content == REMINDER:
             text = "Sorry about that." if self.stubborn else '{"move": "A"}'
         elif self.malformed_every and self.calls % self.malformed_every == 0:

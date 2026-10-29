@@ -63,3 +63,20 @@ def test_second_failure_is_a_forfeit():
     d = asyncio.run(ModelPlayer("m", "fake/model", t).move(view()))
     assert d.move == "B" and d.flags == ("forfeit",)
     assert t.calls == 2
+
+
+def test_cut_off_answers_are_flagged_as_truncated():
+    t = FakeModelTransport(truncate=True)
+    d = asyncio.run(ModelPlayer("m", "fake/model", t, reasoning="low", max_tokens=20).move(view()))
+    assert d.move == "B" and d.flags == ("forfeit", "truncated")
+    assert t.calls == 2
+    body = t.seen[0].to_dict()
+    assert body["reasoning"] == {"effort": "low", "exclude": True} and body["max_tokens"] == 20
+
+
+def test_reasoning_setting_is_part_of_the_recording_key():
+    t = FakeModelTransport()
+    asyncio.run(ModelPlayer("m", "fake/model", t).move(view()))
+    asyncio.run(ModelPlayer("m", "fake/model", t, reasoning="none").move(view()))
+    assert t.seen[0].key() != t.seen[1].key()
+    assert "reasoning" not in t.seen[0].to_dict(), "nothing is sent when no effort is configured"

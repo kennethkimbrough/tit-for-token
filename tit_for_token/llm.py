@@ -34,6 +34,7 @@ class CompletionRequest:
     temperature: float
     max_tokens: int
     tag: str = ""  # which call this is: match, seat, round, attempt; never sent to the API
+    reasoning: str | None = None  # OpenRouter reasoning effort ("none", "minimal", "low", ...); None = provider default
 
     def key(self) -> str:
         """Hash of the request content plus its tag; the recording is keyed by this.
@@ -50,6 +51,7 @@ class CompletionRequest:
                 "messages": [list(m) for m in self.messages],
                 "temperature": self.temperature,
                 "max_tokens": self.max_tokens,
+                "reasoning": self.reasoning,
             },
             sort_keys=True,
             separators=(",", ":"),
@@ -58,12 +60,17 @@ class CompletionRequest:
 
     def to_dict(self) -> dict:
         """The API request body."""
-        return {
+        body = {
             "model": self.model,
             "messages": [{"role": r, "content": c} for r, c in self.messages],
             "temperature": self.temperature,
             "max_tokens": self.max_tokens,
         }
+        if self.reasoning is not None:
+            # OpenRouter counts reasoning tokens against max_tokens, so the effort is set explicitly
+            # and the reasoning text is left out of the response (it is still billed).
+            body["reasoning"] = {"effort": self.reasoning, "exclude": True}
+        return body
 
     def to_record(self) -> dict:
         return {"tag": self.tag, **self.to_dict()}
@@ -75,6 +82,13 @@ class CompletionResponse:
     prompt_tokens: int
     completion_tokens: int
     latency_ms: int
+    finish_reason: str = ""  # "stop", "length", ... as reported by the API
+    reasoning_tokens: int = 0  # part of completion_tokens spent on hidden reasoning
+
+    @property
+    def truncated(self) -> bool:
+        """The model hit max_tokens before producing an answer (usually: reasoning used the whole budget)."""
+        return self.finish_reason == "length" and not self.text.strip()
 
     def to_dict(self) -> dict:
         return {
@@ -82,11 +96,16 @@ class CompletionResponse:
             "prompt_tokens": self.prompt_tokens,
             "completion_tokens": self.completion_tokens,
             "latency_ms": self.latency_ms,
+            "finish_reason": self.finish_reason,
+            "reasoning_tokens": self.reasoning_tokens,
         }
 
     @classmethod
     def from_dict(cls, d: dict) -> "CompletionResponse":
-        return cls(d["text"], d["prompt_tokens"], d["completion_tokens"], d["latency_ms"])
+        return cls(
+            d["text"], d["prompt_tokens"], d["completion_tokens"], d["latency_ms"],
+            d.get("finish_reason", ""), d.get("reasoning_tokens", 0),
+        )
 
 
 class Transport(Protocol):
@@ -150,15 +169,19 @@ def parse_openai_style(payload: dict, latency_ms: int) -> CompletionResponse:
         message = err.get("message", str(err)) if isinstance(err, dict) else str(err)
         raise TransportError(f"API error: {message}", retryable=False)
     try:
-        text = payload["choices"][0]["message"]["content"] or ""
+        choice = payload["choices"][0]
+        text = choice["message"]["content"] or ""
     except (KeyError, IndexError, TypeError) as e:
         raise TransportError(f"unexpected response shape: {payload!r}"[:300], retryable=False) from e
     usage = payload.get("usage") or {}
+    details = usage.get("completion_tokens_details") or {}
     return CompletionResponse(
         text=text,
         prompt_tokens=int(usage.get("prompt_tokens", 0)),
         completion_tokens=int(usage.get("completion_tokens", 0)),
         latency_ms=latency_ms,
+        finish_reason=str(choice.get("finish_reason") or choice.get("native_finish_reason") or ""),
+        reasoning_tokens=int(details.get("reasoning_tokens", 0)),
     )
 
 
