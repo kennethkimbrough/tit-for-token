@@ -8,10 +8,10 @@ the same as milestone 1: each of the 250 matches here has the same id, seed and 
 - **Naming the game did not measurably change how often any model cooperated.** The changes were +1
   to +10 points, and every interval includes zero. Gemini moved the most (55% → 65%), but its
   interval runs from -7 to +26 points.
-- **It made the models less forgiving.** Gemini answered a defection with defection more consistently
-  (95% → 99%, change +5 points [+2 to +8]) and stopped going back to cooperating after retaliating
-  (2% → 0%). DeepSeek also stopped forgiving (4% → 0%). Both changes are small in absolute terms, because
-  forgiveness was already rare.
+- **It made two models stricter.** Gemini answered a defection with defection more consistently
+  (95% → 99%, change +5 points [+2 to +8]), and DeepSeek stopped going back to cooperating after
+  retaliating (4% → 0%, change -4 points [-22 to -1]). Gemini's forgiveness fell too (2% → 0%), but
+  that interval reaches zero. These are small changes to behaviour that was already rare.
 - **Nothing else moved.** Exploitation of an unconditional cooperator and payoff per round stayed
   the same within their intervals.
 

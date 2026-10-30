@@ -100,7 +100,7 @@ intervals ([`comparison.md`](runs/m3-named/comparison.md)).
 | Claude Haiku 5.5 | 83% → 86% (+3 [-3 to +10]) | 100% → 100% | 0% → 1% (+1 [+0 to +3]) |
 | DeepSeek V4.1 Flash | 81% → 83% (+2 [+0 to +5]) | 99% → 100% (+1 [+0 to +6]) | 4% → 0% (**-4** [-22 to -1]) |
 | GPT-5 mini | 71% → 73% (+1 [-9 to +12]) | 96% → 97% (+1 [-4 to +5]) | 6% → 2% (-4 [-9 to +1]) |
-| Gemini 2.5 Flash | 55% → 65% (+10 [-7 to +26]) | 95% → 99% (**+5** [+2 to +8]) | 2% → 0% (**-2** [-5 to -0]) |
+| Gemini 2.5 Flash | 55% → 65% (+10 [-7 to +26]) | 95% → 99% (**+5** [+2 to +8]) | 2% → 0% (-2 [-5 to 0]) |
 
 *Changes are in percentage points with 95% paired intervals. The first
 numbers differ from the milestone 1 table because only the shared matches
@@ -109,9 +109,10 @@ count.*
 - **Naming the game did not measurably change how often any model
   cooperated.** Every cooperation interval includes zero; Gemini moved the
   most, but its interval runs from -7 to +26 points.
-- **It made the models less forgiving.** Gemini retaliated more consistently
-  and, like DeepSeek, stopped going back to cooperating after retaliating.
-  These are small changes to behaviour that was already rare.
+- **It made two models stricter.** Gemini retaliated more consistently, and
+  DeepSeek stopped going back to cooperating after retaliating. Those are the
+  only two changes whose intervals exclude zero (in bold), and both are small
+  changes to behaviour that was already rare.
 - At 70 matches per model, a real cooperation effect smaller than about 10
   points would not show up. The two arms were run hours apart on the same
   day; [`notes.md`](runs/m3-named/notes.md) lists the conditions.
