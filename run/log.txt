@@ -1,0 +1,5 @@
+m1-dry-run: 0 of 40 matches already done, 40 to play
+  25/40 matches played, $0.1568 spent
+  40/40 matches played, $0.3320 spent
+completed: 40/40 matches, 450 live calls, $0.3320 spent
+results: python -m tit_for_token report run

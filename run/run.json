@@ -1,0 +1,57 @@
+{
+  "calls_by_model": {
+    "anthropic/claude-haiku-5.5": {
+      "calls": 154,
+      "completion_tokens": 2845,
+      "cut_off": 0,
+      "empty": 0,
+      "latency_ms_max": 4047,
+      "latency_ms_p50": 746,
+      "latency_ms_p95": 2302,
+      "prompt_tokens": 81250,
+      "reasoning_tokens": 1204
+    },
+    "deepseek/deepseek-v4.1-flash": {
+      "calls": 77,
+      "completion_tokens": 56090,
+      "cut_off": 6,
+      "empty": 6,
+      "latency_ms_max": 68019,
+      "latency_ms_p50": 5033,
+      "latency_ms_p95": 26114,
+      "prompt_tokens": 29140,
+      "reasoning_tokens": 55512
+    },
+    "google/gemini-2.5-flash": {
+      "calls": 113,
+      "completion_tokens": 41051,
+      "cut_off": 0,
+      "empty": 0,
+      "latency_ms_max": 4646,
+      "latency_ms_p50": 2242,
+      "latency_ms_p95": 2709,
+      "prompt_tokens": 36900,
+      "reasoning_tokens": 40353
+    },
+    "openai/gpt-5-mini": {
+      "calls": 106,
+      "completion_tokens": 28586,
+      "cut_off": 0,
+      "empty": 0,
+      "latency_ms_max": 13005,
+      "latency_ms_p50": 4108,
+      "latency_ms_p95": 6941,
+      "prompt_tokens": 32486,
+      "reasoning_tokens": 24064
+    }
+  },
+  "completed": true,
+  "live_calls": 450,
+  "matches": 40,
+  "matches_total": 40,
+  "name": "m1-dry-run",
+  "recorded_calls": 450,
+  "replay": false,
+  "spent_usd": 0.332013,
+  "stopped_reason": ""
+}
