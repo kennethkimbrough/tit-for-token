@@ -20,10 +20,16 @@ import random
 import time
 import urllib.error
 import urllib.request
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 from typing import Protocol
 
 OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions"
+
+# HTTP calls block, so they run on threads. asyncio's default pool has only min(32, CPUs + 4)
+# threads (8 on a 4-core CI machine), which would silently cap the whole tournament at 8 calls
+# in flight whatever the per-model limits say. The real limits are the per-model semaphores.
+_HTTP_THREADS = ThreadPoolExecutor(max_workers=64, thread_name_prefix="http")
 API_KEY_ENV = "OPENROUTER_API_KEY"
 
 
@@ -134,7 +140,7 @@ class OpenRouterTransport:
         self._timeout = timeout
 
     async def complete(self, request: CompletionRequest) -> CompletionResponse:
-        return await asyncio.to_thread(self._post, request)
+        return await asyncio.get_running_loop().run_in_executor(_HTTP_THREADS, self._post, request)
 
     def _post(self, request: CompletionRequest) -> CompletionResponse:
         body = json.dumps(request.to_dict()).encode()

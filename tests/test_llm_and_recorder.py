@@ -152,3 +152,19 @@ def test_recording_transport_reuses_and_replay_never_goes_live(tmp_path):
         assert await exploding.complete(req()) == first  # answered from the recording, never live
 
     asyncio.run(go())
+
+
+def test_call_stats_summarise_the_recording(tmp_path):
+    rec = Recording(tmp_path / "calls.jsonl")
+    for i, ms in enumerate([10, 20, 30, 400]):
+        rec.put(req(tag=str(i)), CompletionResponse('{"move": "A"}', 5, 2, ms, "stop", 1))
+    rec.put(req(tag="cut", model="other"), CompletionResponse("", 5, 50, 99, "length", 50))
+    stats = Recording(tmp_path / "calls.jsonl").call_stats()
+    assert stats["m"]["calls"] == 4 and stats["m"]["latency_ms_p50"] == 30 and stats["m"]["latency_ms_max"] == 400
+    assert stats["m"]["reasoning_tokens"] == 4 and stats["m"]["cut_off"] == 0
+    assert stats["other"]["cut_off"] == 1 and stats["other"]["empty"] == 1
+
+
+def test_http_calls_are_not_limited_by_the_default_thread_pool():
+    from tit_for_token.llm import _HTTP_THREADS
+    assert _HTTP_THREADS._max_workers >= 32

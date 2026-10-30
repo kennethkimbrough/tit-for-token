@@ -213,6 +213,7 @@ async def run_tournament(
                 "matches_total": total,
                 "live_calls": live_calls,
                 "recorded_calls": len(recording),
+                "calls_by_model": recording.call_stats(),
                 "spent_usd": round(budget.spent, 6),
                 "replay": replay,
                 "stopped_reason": stopped_reason,

@@ -37,6 +37,36 @@ class Recording:
     def __len__(self) -> int:
         return len(self._responses)
 
+    def call_stats(self) -> dict[str, dict]:
+        """Per model: call count, latency percentiles, tokens, cut-off answers. Read back from the file."""
+        if not self.path.exists():
+            return {}
+        per_model: dict[str, list[dict]] = {}
+        with self.path.open(encoding="utf-8") as f:
+            for line in f:
+                if line.strip():
+                    entry = json.loads(line)
+                    per_model.setdefault(entry["request"]["model"], []).append(entry["response"])
+        stats = {}
+        for model, responses in sorted(per_model.items()):
+            latencies = sorted(r["latency_ms"] for r in responses)
+
+            def pct(q: float) -> int:
+                return latencies[min(len(latencies) - 1, int(q * len(latencies)))]
+
+            stats[model] = {
+                "calls": len(responses),
+                "latency_ms_p50": pct(0.5),
+                "latency_ms_p95": pct(0.95),
+                "latency_ms_max": latencies[-1],
+                "prompt_tokens": sum(r["prompt_tokens"] for r in responses),
+                "completion_tokens": sum(r["completion_tokens"] for r in responses),
+                "reasoning_tokens": sum(r.get("reasoning_tokens", 0) for r in responses),
+                "cut_off": sum(1 for r in responses if r.get("finish_reason") == "length" and not r["text"].strip()),
+                "empty": sum(1 for r in responses if not r["text"].strip()),
+            }
+        return stats
+
     def get(self, request: CompletionRequest) -> CompletionResponse | None:
         return self._responses.get(request.key())
 
