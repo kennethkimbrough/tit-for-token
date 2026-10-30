@@ -78,6 +78,7 @@ class PlayerFactory:
                 temperature=spec.temperature if spec.temperature is not None else self._config.temperature,
                 max_tokens=spec.max_tokens if spec.max_tokens is not None else self._config.max_tokens,
                 reasoning=spec.reasoning,
+                framing=self._config.framing,
             )
         bot = bot_by_name(name)
         if isinstance(bot, RandomBot):

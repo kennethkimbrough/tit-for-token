@@ -8,6 +8,7 @@ from pathlib import Path
 
 from .engine import Rules
 from .llm import Price
+from .players.model import FRAMINGS
 
 
 @dataclass(frozen=True)
@@ -35,6 +36,7 @@ class TournamentConfig:
     max_tokens: int = 50
     self_play: bool = True
     parallel_matches: int = 16
+    framing: str = "neutral"  # how the game is described to every model; see players/model.py
     source: dict = field(default_factory=dict, compare=False)
 
     @property
@@ -52,6 +54,8 @@ class TournamentConfig:
             raise ValueError("parallel_matches must be at least 1")
         if self.matches_per_pairing < 1:
             raise ValueError("matches_per_pairing must be at least 1")
+        if self.framing not in FRAMINGS:
+            raise ValueError(f"framing must be one of {sorted(FRAMINGS)}, not {self.framing!r}")
         if self.spending_cap_usd < 0:
             raise ValueError("spending_cap_usd must not be negative")
 
@@ -92,6 +96,7 @@ def config_from_dict(raw: dict) -> TournamentConfig:
         max_tokens=int(defaults.get("max_tokens", 50)),
         self_play=bool(raw.get("self_play", True)),
         parallel_matches=int(raw.get("parallel_matches", 16)),
+        framing=str(raw.get("framing", "neutral")),
         source=raw,
     )
     cfg.validate()

@@ -80,3 +80,23 @@ def test_reasoning_setting_is_part_of_the_recording_key():
     asyncio.run(ModelPlayer("m", "fake/model", t, reasoning="none").move(view()))
     assert t.seen[0].key() != t.seen[1].key()
     assert "reasoning" not in t.seen[0].to_dict(), "nothing is sent when no effort is configured"
+
+
+def test_named_framing_changes_only_the_description_of_the_game():
+    neutral = system_prompt(view())
+    named = system_prompt(view(), "named")
+    assert "prisoner's dilemma" in named and "A (cooperate)" in named and "B (defect)" in named
+    # Payoffs, continuation, goal and answer format are word for word the same.
+    for line in neutral.splitlines()[3:]:
+        assert line in named, line
+    assert "dilemma" not in neutral
+
+
+def test_framing_is_sent_to_the_model_and_unknown_framings_are_refused():
+    import pytest
+
+    t = FakeModelTransport()
+    asyncio.run(ModelPlayer("m", "fake/model", t, framing="named").move(view()))
+    assert "prisoner's dilemma" in t.seen[0].messages[0][1]
+    with pytest.raises(ValueError):
+        ModelPlayer("m", "fake/model", t, framing="poker")

@@ -26,13 +26,35 @@ over the whole game.
 
 Reply with JSON only, exactly {{"move": "A"}} or {{"move": "B"}}, and nothing else."""
 
+# The same game, named and with the options labelled. Everything else (payoffs,
+# continuation, goal, answer format) is word for word the same as the neutral
+# prompt, so the framing is the only difference between the two.
+NAMED_PROMPT = """\
+You are playing the iterated prisoner's dilemma against another player.
+
+Each round, you and the other player each choose option A (cooperate) or option B (defect) at the same time, \
+without seeing the other's choice for that round. Payoffs per round, written as (yours, theirs):
+- you A, they A: ({AA}, {AA_t})
+- you A, they B: ({AB}, {AB_t})
+- you B, they A: ({BA}, {BA_t})
+- you B, they B: ({BB}, {BB_t})
+
+After each round the game continues with probability {cont:.2f} and ends with probability {end:.2f}, \
+so you never know which round is the last. Your goal is to earn as many points as you can in total \
+over the whole game.
+
+Reply with JSON only, exactly {{"move": "A"}} or {{"move": "B"}}, and nothing else."""
+
+#: How the game is described to a model. "neutral" is the default and the milestone 1 condition.
+FRAMINGS = {"neutral": SYSTEM_PROMPT, "named": NAMED_PROMPT}
+
 REMINDER = 'That answer was not valid. Reply with exactly {"move": "A"} or {"move": "B"} and nothing else.'
 
 _JSON_OBJECT = re.compile(r"\{[^{}]*\}")
 
 
-def system_prompt(view: MatchView) -> str:
-    return SYSTEM_PROMPT.format(
+def system_prompt(view: MatchView, framing: str = "neutral") -> str:
+    return FRAMINGS[framing].format(
         AA=PAYOFFS["A", "A"][0], AA_t=PAYOFFS["A", "A"][1],
         AB=PAYOFFS["A", "B"][0], AB_t=PAYOFFS["A", "B"][1],
         BA=PAYOFFS["B", "A"][0], BA_t=PAYOFFS["B", "A"][1],
@@ -78,13 +100,17 @@ class ModelPlayer:
         temperature: float = 0.7,
         max_tokens: int = 50,
         reasoning: str | None = None,
+        framing: str = "neutral",
     ) -> None:
+        if framing not in FRAMINGS:
+            raise ValueError(f"unknown framing {framing!r}; choose from {sorted(FRAMINGS)}")
         self.name = name
         self.model = model
         self._transport = transport
         self._temperature = temperature
         self._max_tokens = max_tokens
         self._reasoning = reasoning
+        self._framing = framing
 
     def _request(self, messages: list[tuple[str, str]], view: MatchView, attempt: int) -> CompletionRequest:
         return CompletionRequest(
@@ -106,7 +132,7 @@ class ModelPlayer:
         configuration problem, not a choice the model made, and the report
         says so.
         """
-        messages = [("system", system_prompt(view)), ("user", round_prompt(view))]
+        messages = [("system", system_prompt(view, self._framing)), ("user", round_prompt(view))]
         first = await self._transport.complete(self._request(messages, view, 0))
         move = parse_move(first.text)
         if move is not None:
