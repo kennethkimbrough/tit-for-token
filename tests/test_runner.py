@@ -134,3 +134,24 @@ def test_build_transports_shares_a_client_per_provider_but_throttles_per_model(t
     assert throttles["m1"] is not throttles["m2"], "each model has its own concurrency limit"
     assert throttles["m1"]._sem._value == 1 and throttles["m2"]._sem._value == 3
     assert throttles["m1"]._inner is throttles["m2"]._inner, "and shares the provider's retrying client"
+
+
+def test_milestone_3_reuses_milestone_1_matches_exactly():
+    """The framing experiment is paired: every m3 match has an m1 match with the same id and seed."""
+    from pathlib import Path
+
+    from tit_for_token.config import load_config
+    from tit_for_token.engine import match_seed
+    from tit_for_token.runner import all_match_ids
+
+    root = Path(__file__).resolve().parents[1]
+    m1 = load_config(root / "configs/m1-small-models.toml")
+    m3 = load_config(root / "configs/m3-named.toml")
+    assert m3.framing == "named" and m1.framing == "neutral"
+    assert m3.models == m1.models and m3.seed == m1.seed and m3.rules == m1.rules
+    m1_ids = {mid for _, mid in all_match_ids(m1)}
+    m3_ids = [mid for _, mid in all_match_ids(m3)]
+    assert set(m3_ids) <= m1_ids
+    # 6 model pairs + 4 self-play + 3 bots x 4 models + 3 bot pairs (free), ten matches each
+    assert len(m3_ids) == 25 * 10
+    assert all(match_seed(m3.seed, mid) == match_seed(m1.seed, mid) for mid in m3_ids)
