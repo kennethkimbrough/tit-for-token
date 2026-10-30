@@ -3,7 +3,7 @@
     python -m tit_for_token run CONFIG.toml [--out DIR] [--replay] [--recording FILE]
     python -m tit_for_token report DIR [--reps N]
     python -m tit_for_token check DIR          replay DIR's config against its recording and compare
-    python -m tit_for_token site DIR [--out site] [--featured MATCH_ID]   build the results site
+    python -m tit_for_token site DIR [--out site] [--featured MATCH_ID] [--compare DIR2]   build the results site
     python -m tit_for_token compare DIR_A DIR_B   paired comparison over the matches two runs share
 
 ``run`` plays (or resumes) a tournament. Without ``--replay`` it makes live
@@ -80,7 +80,8 @@ def cmd_compare(args: argparse.Namespace) -> int:
 def cmd_site(args: argparse.Namespace) -> int:
     from .site import build_site
 
-    target = build_site(Path(args.dir), Path(args.out), reps=args.reps, featured=args.featured)
+    compare = Path(args.compare) if args.compare else None
+    target = build_site(Path(args.dir), Path(args.out), reps=args.reps, featured=args.featured, compare=compare)
     print(f"wrote {target}")
     return 0
 
@@ -115,6 +116,7 @@ def main(argv: list[str] | None = None) -> int:
     site.add_argument("dir")
     site.add_argument("--out", default="site", help="output directory (default site/)")
     site.add_argument("--featured", help="match id the viewer opens on")
+    site.add_argument("--compare", help="a second run over the same matches (e.g. runs/m3-named) to show as a comparison")
     site.add_argument("--reps", type=int, default=2000, help="bootstrap resamples")
     site.set_defaults(func=cmd_site)
 

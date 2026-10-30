@@ -131,6 +131,17 @@ table.board tr.bot .who b { font-weight: 600; color: var(--text-2); }
 .track .band { position: absolute; top: 1px; bottom: 1px; border-radius: 3px; background: var(--band); }
 .track .tick { position: absolute; top: -3px; width: 3px; height: 12px; margin-left: -1.5px; border-radius: 2px; background: var(--tick); }
 .na { color: var(--text-3); }
+table.board.framing { min-width: 640px; }
+.chg .num { font-weight: 700; font-size: 15px; }
+.chg .delta { font-size: 12.5px; color: var(--text-3); margin-left: 6px; }
+.chg.sig .delta { color: var(--text); font-weight: 700; }
+.ztrack { position: relative; height: 8px; border-radius: 4px; background: var(--surface-2); border: 1px solid var(--line); margin-top: 6px; }
+.ztrack .zero { position: absolute; left: 50%; top: -4px; bottom: -4px; width: 1px; background: var(--line-strong); }
+.ztrack .band { position: absolute; top: 1px; bottom: 1px; border-radius: 3px; background: var(--band); }
+.ztrack .tick { position: absolute; top: -3px; width: 3px; height: 12px; margin-left: -1.5px; border-radius: 2px; background: var(--tick); }
+.framing-notes ul { margin: 14px 0 0; padding-left: 20px; }
+.framing-notes li { margin: 6px 0; }
+.framing-notes h3, .framing-notes p { display: none; }
 .legend { display: flex; flex-wrap: wrap; gap: 16px; font-size: 13px; color: var(--text-3); margin-top: 14px; }
 .legend .swatch { display: inline-block; vertical-align: -1px; margin-right: 5px; }
 
@@ -246,6 +257,14 @@ footer p { max-width: 75ch; }
     </div>
   </section>
 
+  <section class="card" id="framing" aria-labelledby="framing-h" hidden>
+    <h2 id="framing-h">Does naming the game change behaviour?</h2>
+    <p class="sub" id="framing-sub"></p>
+    <div class="scroll"><table class="board framing" id="framing-table"></table></div>
+    <div class="legend"><span>Each cell: the rate without the name → with it, and the change in points. The bar is the change: tick at the estimate, band at its 95% paired interval, line at zero. <b>Bold</b> changes have intervals that exclude zero.</span></div>
+    <div class="framing-notes" id="framing-notes"></div>
+  </section>
+
   <section class="card" aria-labelledby="grid-h">
     <h2 id="grid-h">Every pairing</h2>
     <p class="sub" id="grid-sub"></p>
@@ -346,6 +365,35 @@ footer p { max-width: 75ch; }
     }));
   }
   renderBoard();
+
+  // ---------- framing experiment ----------
+  if (DATA.framing) {
+    const F = DATA.framing;
+    document.getElementById("framing").hidden = false;
+    document.getElementById("framing-sub").innerHTML =
+      "The games above never name the game: the options are A and B. A second run, <a href=\"" + DATA.repo + "/tree/main/" + esc(F.path) + "\"><code>" + esc(F.path) + "</code></a>, " +
+      "replays " + F.shared.toLocaleString() + " of the same matches with one change to the prompt: it says the game is the prisoner's dilemma, A is cooperate and B is defect. " +
+      "Same matches, same lengths, same opponents, so the comparison is match by match.";
+    const FC = [["cooperation", "Cooperates"], ["retaliation", "Retaliates"], ["forgiveness", "Forgives"]];
+    const SPAN = 0.3; // the bar shows changes from -30 to +30 points
+    const pos = v => Math.max(0, Math.min(100, 50 + v / SPAN * 50));
+    const cell = c => {
+      if (!c) return '<td class="metric"><span class="na">–</span></td>';
+      const d = Math.round(c.d * 100), lo = Math.round(c.lo * 100), hi = Math.round(c.hi * 100);
+      const sig = lo > 0 || hi < 0; // judged on the rounded interval, as the report prints it
+      const sign = v => (v > 0 ? "+" : v < 0 ? "−" : "±") + Math.abs(v);
+      return '<td class="metric chg' + (sig ? " sig" : "") + '" title="Change ' + sign(d) + " points, 95% interval " + sign(lo) + " to " + sign(hi) + '">' +
+        '<span class="num">' + pct(c.a) + " → " + pct(c.b) + '</span><span class="delta">' + sign(d) + " pts</span>" +
+        '<div class="ztrack" aria-hidden="true"><div class="band" style="left:' + pos(c.lo) + "%;width:" + Math.max(pos(c.hi) - pos(c.lo), 0.6) + '%"></div>' +
+        '<div class="zero"></div><div class="tick" style="left:' + pos(c.d) + '%"></div></div></td>';
+    };
+    const rows = F.rows.slice().sort((a, b) => label(a.name).localeCompare(label(b.name)));
+    document.getElementById("framing-table").innerHTML =
+      "<thead><tr><th>Model</th>" + FC.map(c => "<th>" + c[1] + "</th>").join("") + "</tr></thead><tbody>" +
+      rows.map(r => '<tr class="model"><td class="who"><b>' + esc(label(r.name)) + "</b><span>" + r.matches + " matches in both runs</span></td>" +
+        FC.map(c => cell(r[c[0]])).join("") + "</tr>").join("") + "</tbody>";
+    document.getElementById("framing-notes").innerHTML = F.notes_html;
+  }
 
   // ---------- pairing grid ----------
   const order = DATA.players.slice().sort((a, b) => (a.kind === b.kind ? b.payoff.v - a.payoff.v : a.kind === "model" ? -1 : 1)).map(p => p.name);

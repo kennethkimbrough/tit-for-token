@@ -90,3 +90,18 @@ def test_render_markdown_subset():
     assert "<li><strong>Bold</strong> and <em>italic</em> with <code>x &lt; y</code> continued</li>" in out
     assert '<a href="https://example.com">external</a>' in out
     assert "relative" in out and "runs/x.json" not in out, "relative links become plain text on the site"
+
+
+def test_site_includes_the_framing_comparison_when_asked():
+    from pathlib import Path
+
+    from tit_for_token.site import site_data
+
+    root = Path(__file__).resolve().parents[1]
+    data = site_data(root / "runs/m1-small-models", reps=50, compare=root / "runs/m3-named")
+    f = data["framing"]
+    assert f["framing"] == "named" and f["shared"] == 250
+    assert sorted(r["name"] for r in f["rows"]) == ["deepseek-flash", "gemini-flash", "gpt-mini", "haiku"]
+    gem = next(r for r in f["rows"] if r["name"] == "gemini-flash")
+    assert gem["cooperation"]["a"] < gem["cooperation"]["b"] and gem["matches"] == 70
+    assert site_data(root / "runs/m1-small-models", reps=50)["framing"] is None

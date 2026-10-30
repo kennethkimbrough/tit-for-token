@@ -19,6 +19,7 @@ concurrency:
 env:
   RUN_DIR: runs/m1-small-models
   FEATURED_MATCH: haiku--gemini-flash--003
+  COMPARE_DIR: runs/m3-named
 
 jobs:
   build-and-deploy:
@@ -30,9 +31,11 @@ jobs:
           python-version: "3.12"
       - run: pip install -e .
       - name: Check the run replays exactly before publishing it
-        run: python -m tit_for_token check "$RUN_DIR"
+        run: |
+          python -m tit_for_token check "$RUN_DIR"
+          python -m tit_for_token check "$COMPARE_DIR"
       - name: Build the site
-        run: python -m tit_for_token site "$RUN_DIR" --out site --featured "$FEATURED_MATCH"
+        run: python -m tit_for_token site "$RUN_DIR" --out site --featured "$FEATURED_MATCH" --compare "$COMPARE_DIR"
       - name: Publish to gh-pages
         uses: peaceiris/actions-gh-pages@v4
         with:

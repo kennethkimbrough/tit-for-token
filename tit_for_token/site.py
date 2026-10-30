@@ -17,7 +17,7 @@ import re
 from importlib import resources
 from pathlib import Path
 
-from .analysis import Estimate, mutual_cooperation, payoff_matrix, summarize_players
+from .analysis import Change, Estimate, compare_runs, mutual_cooperation, payoff_matrix, summarize_players
 from .config import load_config
 from .runner import load_matches
 
@@ -117,7 +117,35 @@ def render_markdown(text: str) -> str:
     return "\n".join(out)
 
 
-def site_data(run_dir: Path, reps: int = 2000, featured: str | None = None) -> dict:
+def _change(c: Change) -> dict | None:
+    d = c.diff
+    if d.n_matches == 0 or d.value != d.value:
+        return None
+    return {"a": round(c.first.value, 4), "b": round(c.second.value, 4), "d": round(d.value, 4),
+            "lo": round(d.low, 4), "hi": round(d.high, 4), "n": d.n_matches}
+
+
+def framing_data(base_dir: Path, other_dir: Path, reps: int = 2000) -> dict:
+    """The paired comparison of a second run (e.g. a different framing) against the main run."""
+    base = list(load_matches(Path(base_dir) / "matches.jsonl").values())
+    other = list(load_matches(Path(other_dir) / "matches.jsonl").values())
+    rows = compare_runs(base, other, reps)
+    config = load_config(Path(other_dir) / "config.toml")
+    notes = Path(other_dir) / "notes.md"
+    return {
+        "path": f"runs/{Path(other_dir).name}",
+        "framing": config.framing,
+        "shared": len({m.match_id for m in base} & {m.match_id for m in other}),
+        "rows": [
+            {"name": r.player, "matches": r.matches, "cooperation": _change(r.cooperation),
+             "retaliation": _change(r.retaliation), "forgiveness": _change(r.forgiveness)}
+            for r in rows
+        ],
+        "notes_html": render_markdown(notes.read_text(encoding="utf-8")) if notes.exists() else "",
+    }
+
+
+def site_data(run_dir: Path, reps: int = 2000, featured: str | None = None, compare: Path | None = None) -> dict:
     run_dir = Path(run_dir)
     config = load_config(run_dir / "config.toml")
     matches = list(load_matches(run_dir / "matches.jsonl").values())
@@ -188,6 +216,7 @@ def site_data(run_dir: Path, reps: int = 2000, featured: str | None = None) -> d
 
     notes_path = run_dir / "notes.md"
     return {
+        "framing": framing_data(run_dir, compare, reps) if compare else None,
         "featured": featured or encoded[0]["id"],
         "run": {
             "name": config.name,
@@ -210,8 +239,9 @@ def site_data(run_dir: Path, reps: int = 2000, featured: str | None = None) -> d
     }
 
 
-def build_site(run_dir: Path, out_dir: Path, reps: int = 2000, featured: str | None = None) -> Path:
-    data = site_data(run_dir, reps, featured)
+def build_site(run_dir: Path, out_dir: Path, reps: int = 2000, featured: str | None = None,
+               compare: Path | None = None) -> Path:
+    data = site_data(run_dir, reps, featured, compare)
     # "</" must not appear inside a <script> element; "<\/" is the same string to JSON.
     payload = json.dumps(data, ensure_ascii=False, separators=(",", ":"), sort_keys=True).replace("</", "<\\/")
     template = resources.files("tit_for_token").joinpath("site_template.html").read_text(encoding="utf-8")
