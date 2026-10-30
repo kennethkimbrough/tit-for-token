@@ -19,6 +19,20 @@ committed tournament between four small models, and the results site), and so
 is the framing experiment from milestone 3. Next is cheap talk: letting
 players send a message before each move. See [DESIGN.md](DESIGN.md).
 
+## What I built, decided and learned
+
+- **Built:** round-robin tournaments of the iterated prisoner's dilemma between
+  language models and classic strategies, with every model call recorded so a
+  tournament replays exactly and for free. CI replays the committed run on
+  every push, and a results site shows the leaderboard and every match.
+- **Hardest decision:** reporting every figure with a 95% confidence interval
+  and claiming only what the intervals support. Some differences that look
+  large in the table are labelled as leads to test, not findings.
+- **What I learned:** one run proves very little. Several gaps between models
+  that looked clear were within each other's intervals, and the models'
+  behaviour depends on conditions as small as how much they are allowed to
+  reason. Recording every call is what made it cheap to check instead of guess.
+
 ## Results: milestone 1
 
 Four small models from different labs and five classic bots, 400 matches
