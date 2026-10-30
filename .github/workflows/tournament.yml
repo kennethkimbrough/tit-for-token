@@ -2,8 +2,10 @@ name: Tournament
 
 # Runs a tournament live on GitHub's machines, using the OPENROUTER_API_KEY repository secret,
 # so the key never has to exist anywhere else. Started by hand from the Actions tab.
-# The run directory (recording, matches, report) is uploaded as an artifact for review;
-# nothing is committed automatically.
+#
+# Whatever happens (finished, budget stop, error, cancelled, timed out), the run directory is
+# pushed to its own branch, results/<config name>-<run number>, for review. Nothing is committed
+# to main automatically; a reviewed run is copied into runs/ by hand.
 
 on:
   workflow_dispatch:
@@ -14,12 +16,12 @@ on:
         default: "configs/m1-dry-run.toml"
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   run:
     runs-on: ubuntu-latest
-    timeout-minutes: 120
+    timeout-minutes: 150
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -27,6 +29,7 @@ jobs:
           python-version: "3.12"
       - run: pip install -e .
       - name: Play the tournament
+        timeout-minutes: 120
         env:
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
           CONFIG: ${{ inputs.config }}
@@ -35,17 +38,30 @@ jobs:
             echo "::error::Add the OPENROUTER_API_KEY repository secret first."
             exit 1
           fi
-          python -m tit_for_token run "$CONFIG" --out run
+          python -u -m tit_for_token run "$CONFIG" --out run 2>&1 | tee run-log.txt
+          exit "${PIPESTATUS[0]}"
       - name: Report
         if: always()
         run: |
+          mkdir -p run
+          [ -f run-log.txt ] && cp run-log.txt run/log.txt
           if [ -f run/matches.jsonl ]; then
-            { echo '```'; cat run/run.json; echo '```'; python -m tit_for_token report run --reps 1000; } | tee run/report.md >> "$GITHUB_STEP_SUMMARY"
+            { echo '```'; cat run/run.json 2>/dev/null; echo '```'; python -m tit_for_token report run --reps 1000; } > run/report.md || true
+            cat run/report.md >> "$GITHUB_STEP_SUMMARY"
           fi
-      - name: Upload the run directory
+      - name: Push the run directory to a results branch
         if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: tournament-run
-          path: run/
-          if-no-files-found: ignore
+        env:
+          CONFIG: ${{ inputs.config }}
+        run: |
+          [ -d run ] || exit 0
+          name=$(basename "$CONFIG" .toml)
+          branch="results/${name}-${GITHUB_RUN_NUMBER}"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout --orphan "$branch"
+          git rm -rfq --cached . > /dev/null
+          git add -f run
+          git commit -qm "Tournament run ${name} (workflow run ${GITHUB_RUN_ID})"
+          git push -q origin "$branch"
+          echo "Results pushed to branch $branch" >> "$GITHUB_STEP_SUMMARY"
