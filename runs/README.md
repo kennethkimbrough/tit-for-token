@@ -5,5 +5,6 @@ Committed tournament runs, one directory per run:
 - `matches.jsonl`: every match, one per line, sorted
 - `run.json`: counts, spending, and per-model call statistics
 - `report.md`: the report, as produced by `python -m tit_for_token report <dir>`
+- `notes.md`: findings and conditions in prose, shown on the results site
 
 CI replays each run from its recording on every push and fails if the matches differ.
