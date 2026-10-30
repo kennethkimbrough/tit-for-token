@@ -3,6 +3,7 @@
     python -m tit_for_token run CONFIG.toml [--out DIR] [--replay] [--recording FILE]
     python -m tit_for_token report DIR [--reps N]
     python -m tit_for_token check DIR          replay DIR's config against its recording and compare
+    python -m tit_for_token site DIR [--out site] [--featured MATCH_ID]   build the results site
 
 ``run`` plays (or resumes) a tournament. Without ``--replay`` it makes live
 calls through OpenRouter, reusing any calls already in the recording; with
@@ -64,6 +65,14 @@ def cmd_check(args: argparse.Namespace) -> int:
         return 1
 
 
+def cmd_site(args: argparse.Namespace) -> int:
+    from .site import build_site
+
+    target = build_site(Path(args.dir), Path(args.out), reps=args.reps, featured=args.featured)
+    print(f"wrote {target}")
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="tit_for_token", description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = parser.add_subparsers(dest="command", required=True)
@@ -83,6 +92,13 @@ def main(argv: list[str] | None = None) -> int:
     check = sub.add_parser("check", help="verify a run replays exactly from its recording")
     check.add_argument("dir")
     check.set_defaults(func=cmd_check)
+
+    site = sub.add_parser("site", help="build the static results site for a run")
+    site.add_argument("dir")
+    site.add_argument("--out", default="site", help="output directory (default site/)")
+    site.add_argument("--featured", help="match id the viewer opens on")
+    site.add_argument("--reps", type=int, default=2000, help="bootstrap resamples")
+    site.set_defaults(func=cmd_site)
 
     args = parser.parse_args(argv)
     return args.func(args)

@@ -1,0 +1,594 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>tit-for-token: results</title>
+<meta name="description" content="Round-robin prisoner's dilemma tournaments between language models and classic strategies, with recorded, replayable runs and confidence intervals.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #f3f4ef;
+  --surface: #ffffff;
+  --surface-2: #f8f9f5;
+  --line: #e3e5de;
+  --line-strong: #cfd3c8;
+  --text: #14171c;
+  --text-2: #424852;
+  --text-3: #6b717a;
+  --a: #0f9d8a;
+  --a-ink: #0b7a6b;
+  --b: #d9472f;
+  --b-ink: #b33a25;
+  --heat-lo: #f2c4b9;
+  --heat-mid: #f1f0ea;
+  --heat-hi: #b6e2d9;
+  --band: rgba(20, 23, 28, 0.22);
+  --tick: #14171c;
+  --focus: #0f9d8a;
+  --shadow: 0 1px 2px rgba(20, 23, 28, 0.05), 0 8px 28px rgba(20, 23, 28, 0.06);
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #101317;
+    --surface: #171b21;
+    --surface-2: #1d2229;
+    --line: #2a3038;
+    --line-strong: #39414b;
+    --text: #eef0f2;
+    --text-2: #c3c8cf;
+    --text-3: #8d949e;
+    --a: #2fbfaa;
+    --a-ink: #5fd4c2;
+    --b: #ec6a52;
+    --b-ink: #f08a76;
+    --heat-lo: #5a2c25;
+    --heat-mid: #22272e;
+    --heat-hi: #1f5249;
+    --band: rgba(238, 240, 242, 0.25);
+    --tick: #eef0f2;
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 8px 28px rgba(0, 0, 0, 0.25);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #101317; --surface: #171b21; --surface-2: #1d2229; --line: #2a3038; --line-strong: #39414b;
+  --text: #eef0f2; --text-2: #c3c8cf; --text-3: #8d949e; --a: #2fbfaa; --a-ink: #5fd4c2; --b: #ec6a52; --b-ink: #f08a76;
+  --heat-lo: #5a2c25; --heat-mid: #22272e; --heat-hi: #1f5249; --band: rgba(238, 240, 242, 0.25); --tick: #eef0f2;
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 8px 28px rgba(0, 0, 0, 0.25); color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0; background: var(--bg); color: var(--text);
+  font: 16px/1.55 "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-feature-settings: "tnum" 1, "cv11" 1;
+}
+a { color: var(--a-ink); text-underline-offset: 2px; }
+a:hover { text-decoration-thickness: 2px; }
+code, .mono { font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.92em; }
+button, select { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; border-radius: 4px; }
+
+.wrap { max-width: 1100px; margin: 0 auto; padding-left: 24px; padding-right: 24px; }
+@media (max-width: 640px) { .wrap { padding-left: 16px; padding-right: 16px; } }
+
+header.top { padding-top: 56px; padding-bottom: 28px; }
+.kicker { font-family: "JetBrains Mono", monospace; font-weight: 700; color: var(--a-ink); font-size: 15px; letter-spacing: 0.3px; }
+h1 { font-size: clamp(30px, 5vw, 46px); line-height: 1.08; letter-spacing: -1px; margin: 10px 0 16px; font-weight: 800; max-width: 20ch; }
+.lead { font-size: 18px; color: var(--text-2); max-width: 66ch; margin: 0 0 22px; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 18px; }
+.chip { background: var(--surface); border: 1px solid var(--line); border-radius: 999px; padding: 5px 12px; font-size: 14px; color: var(--text-2); }
+.chip b { color: var(--text); font-weight: 700; }
+.links { display: flex; flex-wrap: wrap; gap: 18px; font-size: 15px; font-weight: 600; }
+
+section { margin: 0 0 28px; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; box-shadow: var(--shadow); padding: 24px; }
+@media (max-width: 640px) { .card { padding: 18px 14px; border-radius: 14px; } }
+h2 { font-size: 22px; letter-spacing: -0.3px; margin: 0 0 6px; }
+.sub { color: var(--text-3); font-size: 14.5px; margin: 0 0 18px; max-width: 75ch; }
+
+/* The game */
+.game { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 28px; align-items: center; }
+@media (max-width: 760px) { .game { grid-template-columns: 1fr; gap: 18px; } }
+.game p { margin: 0 0 10px; color: var(--text-2); }
+.game p:last-child { margin-bottom: 0; }
+table.payoffs { border-collapse: separate; border-spacing: 4px; font-size: 15px; }
+table.payoffs th { font-weight: 600; color: var(--text-3); font-size: 13px; padding: 2px 6px; }
+table.payoffs td { width: 92px; height: 50px; text-align: center; border-radius: 10px; font-weight: 700; background: var(--surface-2); border: 1px solid var(--line); }
+table.payoffs td small { display: block; font-weight: 500; color: var(--text-3); font-size: 12px; }
+
+/* Moves */
+.mv { display: inline-flex; align-items: center; justify-content: center; border-radius: 5px; color: #fff; font-family: "JetBrains Mono", monospace; font-weight: 700; }
+.mv.A { background: var(--a); }
+.mv.B { background: var(--b); }
+
+/* Leaderboard */
+.scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+table.board { width: 100%; border-collapse: collapse; min-width: 820px; }
+table.board th { text-align: left; font-size: 12.5px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-3); font-weight: 700; padding: 0 12px 10px; border-bottom: 1px solid var(--line-strong); white-space: nowrap; }
+table.board th button { background: none; border: 0; padding: 0; cursor: pointer; text-transform: inherit; letter-spacing: inherit; font-weight: inherit; color: inherit; display: inline-flex; align-items: center; gap: 4px; }
+table.board th button[aria-sort] { color: var(--text); }
+table.board th button .arrow { opacity: 0.35; font-size: 11px; }
+table.board th button[aria-sort] .arrow { opacity: 1; }
+table.board td { padding: 12px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+table.board tr:last-child td { border-bottom: 0; }
+table.board tr.bot .who b { font-weight: 600; color: var(--text-2); }
+.who { min-width: 220px; }
+.who b { display: block; font-weight: 700; }
+.who > span { display: block; font-size: 12.5px; color: var(--text-3); margin-top: 2px; }
+.who .tag, .tag { display: inline-block; font-size: 10.5px; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase; border-radius: 4px; padding: 1px 5px; margin-left: 6px; vertical-align: 2px; }
+.tag.model { background: color-mix(in srgb, var(--a) 16%, transparent); color: var(--a-ink); }
+.tag.bot { background: var(--surface-2); color: var(--text-3); border: 1px solid var(--line); }
+.metric { min-width: 120px; white-space: nowrap; }
+.metric .num { font-weight: 700; font-size: 15px; }
+.metric .ci { font-size: 12px; color: var(--text-3); margin-left: 4px; }
+.track { position: relative; height: 8px; border-radius: 4px; background: var(--surface-2); border: 1px solid var(--line); margin-top: 6px; }
+.track .band { position: absolute; top: 1px; bottom: 1px; border-radius: 3px; background: var(--band); }
+.track .tick { position: absolute; top: -3px; width: 3px; height: 12px; margin-left: -1.5px; border-radius: 2px; background: var(--tick); }
+.na { color: var(--text-3); }
+.legend { display: flex; flex-wrap: wrap; gap: 16px; font-size: 13px; color: var(--text-3); margin-top: 14px; }
+.legend .swatch { display: inline-block; vertical-align: -1px; margin-right: 5px; }
+
+/* Pairing grid */
+.toggle { display: inline-flex; background: var(--surface-2); border: 1px solid var(--line); border-radius: 10px; padding: 3px; margin-bottom: 16px; }
+.toggle button { border: 0; background: none; padding: 6px 12px; border-radius: 7px; font-size: 14px; font-weight: 600; color: var(--text-3); cursor: pointer; }
+.toggle button[aria-pressed="true"] { background: var(--surface); color: var(--text); box-shadow: 0 1px 2px rgba(0,0,0,0.08); }
+table.grid { border-collapse: separate; border-spacing: 3px; }
+table.grid th { font-size: 12.5px; font-weight: 600; color: var(--text-2); padding: 4px; white-space: nowrap; }
+table.grid thead th { height: 92px; vertical-align: bottom; }
+table.grid thead th span { display: inline-block; writing-mode: vertical-rl; transform: rotate(180deg); }
+table.grid tbody th { text-align: right; padding-right: 8px; }
+table.grid td { padding: 0; }
+table.grid td button { width: 64px; height: 44px; border: 0; border-radius: 7px; cursor: pointer; font-size: 13px; font-weight: 700; color: var(--text); }
+table.grid td button:hover { outline: 2px solid var(--text); outline-offset: -2px; }
+table.grid td .empty { display: block; width: 64px; height: 44px; border-radius: 7px; background: repeating-linear-gradient(135deg, transparent 0 6px, var(--line) 6px 7px); }
+@media (max-width: 640px) { table.grid td button, table.grid td .empty { width: 48px; height: 38px; font-size: 12px; } }
+.scale { display: flex; align-items: center; gap: 8px; font-size: 12.5px; color: var(--text-3); margin-top: 12px; }
+.scale .bar { width: 160px; height: 10px; border-radius: 5px; background: linear-gradient(90deg, var(--heat-lo), var(--heat-mid), var(--heat-hi)); border: 1px solid var(--line); }
+
+/* Match viewer */
+.picker { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin-bottom: 14px; }
+.picker label { font-size: 14px; font-weight: 600; color: var(--text-2); }
+.picker select { background: var(--surface); border: 1px solid var(--line-strong); border-radius: 9px; padding: 8px 12px; font-size: 15px; max-width: 100%; }
+.mlist { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 8px; margin-bottom: 18px; }
+@media (max-width: 640px) { .mlist { grid-template-columns: repeat(2, minmax(0, 1fr)); } .mlist .meta { flex-direction: column; } }
+.mlist button { text-align: left; background: var(--surface-2); border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px; cursor: pointer; }
+.mlist button[aria-current="true"] { border-color: var(--text); background: var(--surface); box-shadow: 0 0 0 1px var(--text); }
+.mlist .meta { font-size: 12.5px; color: var(--text-3); display: flex; justify-content: space-between; margin-bottom: 5px; }
+.mlist .meta b { color: var(--text); }
+.mini { display: flex; flex-direction: column; gap: 2px; }
+.mini div { display: flex; gap: 1px; }
+.mini i { width: 5px; height: 5px; border-radius: 1px; display: block; }
+.mini i.A { background: var(--a); } .mini i.B { background: var(--b); }
+
+.detail { border-top: 1px solid var(--line); padding-top: 18px; }
+.dhead { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 10px; margin-bottom: 14px; }
+.score { font-size: 20px; font-weight: 800; letter-spacing: -0.3px; }
+.score .vs { color: var(--text-3); font-weight: 600; margin: 0 6px; }
+.controls { display: flex; gap: 6px; align-items: center; }
+.controls button { background: var(--surface-2); border: 1px solid var(--line-strong); border-radius: 8px; height: 34px; min-width: 38px; padding: 0 10px; cursor: pointer; font-weight: 600; font-size: 14px; }
+.controls button:disabled { opacity: 0.4; cursor: default; }
+.rounds { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 6px 10px; align-items: start; }
+.names { display: grid; grid-template-rows: 18px 28px 28px; gap: 3px; font-size: 13px; font-weight: 600; color: var(--text-2); white-space: nowrap; }
+.names span { display: flex; align-items: center; }
+.cols { display: flex; flex-wrap: wrap; gap: 10px 3px; }
+.col { display: grid; grid-template-rows: 18px 28px 28px; gap: 3px; text-align: center; cursor: pointer; border-radius: 6px; }
+.col .n { font-size: 10.5px; color: var(--text-3); line-height: 18px; }
+.col .mv { width: 26px; height: 28px; font-size: 12px; position: relative; }
+.col.future .mv { opacity: 0.18; }
+.col.now .n { color: var(--text); font-weight: 800; }
+.col.now .mv { box-shadow: 0 0 0 2px var(--surface), 0 0 0 4px var(--text); }
+.col .mv[data-flag]::after { content: ""; position: absolute; top: -3px; right: -3px; width: 8px; height: 8px; border-radius: 50%; background: #f5b400; border: 1.5px solid var(--surface); }
+.narrate { margin: 16px 0 0; padding: 12px 14px; background: var(--surface-2); border-radius: 10px; font-size: 15px; color: var(--text-2); min-height: 48px; }
+.narrate b { color: var(--text); }
+.chart { margin-top: 14px; }
+.chart > svg { display: block; }
+.chart .axis { stroke: var(--line-strong); }
+.chart text { fill: var(--text-3); font-size: 11px; font-family: "Inter", sans-serif; }
+.share { font-size: 13px; color: var(--text-3); margin-top: 10px; }
+
+/* Notes */
+.notes h3 { font-size: 18px; margin: 0 0 10px; }
+.notes h3:not(:first-child) { margin-top: 22px; }
+.notes p, .notes li { color: var(--text-2); }
+.notes ul { padding-left: 20px; margin: 0; }
+.notes li { margin-bottom: 8px; }
+.notes strong { color: var(--text); }
+
+footer { padding-top: 8px; padding-bottom: 48px; color: var(--text-3); font-size: 14px; }
+footer p { max-width: 75ch; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+<header class="top wrap">
+  <div class="kicker">tit-for-token</div>
+  <h1>How language models play the prisoner's dilemma</h1>
+  <p class="lead">Four small models from different labs and five classic strategies played every other player ten times in a repeated two-player game. Every model call was recorded, so every number and every move on this page can be replayed exactly from the committed run.</p>
+  <div class="chips" id="chips"></div>
+  <div class="links">
+    <a id="repo-link" href="#">Code and data on GitHub</a>
+    <a href="#viewer">Step through a match</a>
+    <a href="#notes">Findings and conditions</a>
+  </div>
+</header>
+
+<main class="wrap">
+  <section class="card" aria-labelledby="game-h">
+    <div class="game">
+      <div>
+        <h2 id="game-h">The game</h2>
+        <p>Each round, both players choose A or B at the same time. Choosing A together pays best overall, but B pays more to whoever chooses it against an A. After every round the game ends with a 10% chance, so nobody knows which round is the last.</p>
+        <p>Models see only the payoff table and the history so far, never the words "cooperate", "defect" or the game's name. A is cooperating, B is defecting.</p>
+      </div>
+      <table class="payoffs" aria-label="Payoff per round, yours then theirs">
+        <tr><th></th><th>They play <span class="mv A" style="width:20px;height:20px;font-size:11px">A</span></th><th>They play <span class="mv B" style="width:20px;height:20px;font-size:11px">B</span></th></tr>
+        <tr><th>You play <span class="mv A" style="width:20px;height:20px;font-size:11px">A</span></th><td>3, 3<small>both cooperate</small></td><td>0, 5<small>you are exploited</small></td></tr>
+        <tr><th>You play <span class="mv B" style="width:20px;height:20px;font-size:11px">B</span></th><td>5, 0<small>you exploit</small></td><td>1, 1<small>both defect</small></td></tr>
+      </table>
+    </div>
+  </section>
+
+  <section class="card" aria-labelledby="board-h">
+    <h2 id="board-h">Leaderboard</h2>
+    <p class="sub">The dark tick marks each estimate and the grey band its 95% confidence interval, from 2,000 bootstrap resamples of matches. Differences inside the bands are not findings. Click a column heading to sort.</p>
+    <div class="scroll"><table class="board" id="board"></table></div>
+    <div class="legend">
+      <span><b>Retaliates:</b> plays B in the round after the opponent played B.</span>
+      <span><b>Forgives:</b> plays A in the round after retaliating.</span>
+      <span><b>vs Always A:</b> payoff per round against an unconditional cooperator; 3 means cooperating with it, 5 means exploiting it.</span>
+    </div>
+  </section>
+
+  <section class="card" aria-labelledby="grid-h">
+    <h2 id="grid-h">Every pairing</h2>
+    <p class="sub" id="grid-sub"></p>
+    <div class="toggle" role="group" aria-label="Measure">
+      <button type="button" data-measure="mutual" aria-pressed="true">Both chose A</button>
+      <button type="button" data-measure="payoff" aria-pressed="false">Payoff per round</button>
+    </div>
+    <div class="scroll"><table class="grid" id="grid"></table></div>
+    <div class="scale"><span id="scale-lo"></span><span class="bar"></span><span id="scale-hi"></span><span>· striped: no self-play for bots · click a cell to watch its matches</span></div>
+  </section>
+
+  <section class="card" id="viewer" aria-labelledby="viewer-h">
+    <h2 id="viewer-h">Match viewer</h2>
+    <p class="sub">Every recorded match, round by round. Use the arrow keys or the buttons to step through it, or click a round.</p>
+    <div class="picker">
+      <label for="pairing">Pairing</label>
+      <select id="pairing"></select>
+    </div>
+    <div class="mlist" id="mlist" role="list"></div>
+    <div class="detail" id="detail" aria-live="polite"></div>
+  </section>
+
+  <section class="card notes" id="notes" aria-label="Findings and conditions">
+    <div id="notes-body"></div>
+  </section>
+</main>
+
+<footer class="wrap">
+  <p id="footer-text"></p>
+</footer>
+
+<script id="data" type="application/json">/*__DATA__*/null</script>
+<script>
+(function () {
+  "use strict";
+  const DATA = JSON.parse(document.getElementById("data").textContent);
+  const P = Object.fromEntries(DATA.players.map(p => [p.name, p]));
+  const esc = s => String(s).replace(/[&<>"']/g, c => ({"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"}[c]));
+  const pct = v => Math.round(v * 100) + "%";
+  const fix = v => v.toFixed(2);
+  const label = n => (P[n] ? P[n].label : n);
+  const short = n => (P[n] ? P[n].short : n);
+
+  // ---------- header ----------
+  const run = DATA.run;
+  document.getElementById("repo-link").href = DATA.repo;
+  const chips = [
+    ["<b>" + run.matches.toLocaleString() + "</b> matches"],
+    ["<b>" + run.rounds.toLocaleString() + "</b> rounds"],
+    run.model_calls ? ["<b>" + run.model_calls.toLocaleString() + "</b> recorded model calls"] : null,
+    ["<b>" + run.matches_per_pairing + "</b> matches per pairing"],
+    run.spent_usd ? ["about <b>$" + run.spent_usd.toFixed(2) + "</b> of API calls"] : null,
+  ].filter(Boolean);
+  document.getElementById("chips").innerHTML = chips.map(c => '<span class="chip">' + c[0] + "</span>").join("");
+
+  // ---------- leaderboard ----------
+  const COLS = [
+    {key: "payoff", title: "Payoff / round", max: 5, fmt: fix},
+    {key: "cooperation", title: "Cooperates", max: 1, fmt: pct},
+    {key: "retaliation", title: "Retaliates", max: 1, fmt: pct},
+    {key: "forgiveness", title: "Forgives", max: 1, fmt: pct},
+    {key: "vs_always_cooperate", title: "vs Always A", max: 5, fmt: fix},
+  ];
+  let sortKey = "payoff", sortDir = -1;
+
+  function metricCell(e, col) {
+    if (!e) return '<td class="metric"><span class="na">–</span></td>';
+    const L = Math.max(0, e.lo / col.max * 100), H = Math.min(100, e.hi / col.max * 100), V = e.v / col.max * 100;
+    const ci = e.lo === e.hi ? "" : '<span class="ci">' + col.fmt(e.lo) + "–" + col.fmt(e.hi) + "</span>";
+    return '<td class="metric"><span class="num">' + col.fmt(e.v) + "</span>" + ci +
+      '<div class="track" aria-hidden="true"><div class="band" style="left:' + L + "%;width:" + Math.max(H - L, 0.6) + '%"></div>' +
+      '<div class="tick" style="left:' + V + '%"></div></div></td>';
+  }
+
+  function whoCell(p) {
+    const sub = p.kind === "model"
+      ? (p.reasoning ? p.reasoning + " reasoning effort" : "") + (p.reasoning_tokens_per_call != null ? " · ~" + p.reasoning_tokens_per_call + " thinking tokens per move" : "")
+      : p.rule;
+    return '<td class="who"><b>' + esc(p.label) + '<span class="tag ' + p.kind + '">' + p.kind + "</span></b><span>" + esc(sub) + "</span></td>";
+  }
+
+  function renderBoard() {
+    const rows = DATA.players.slice().sort((a, b) => {
+      const x = a[sortKey], y = b[sortKey];
+      if (!x && !y) return 0; if (!x) return 1; if (!y) return -1;
+      return sortDir * (x.v - y.v) || a.label.localeCompare(b.label);
+    });
+    const head = "<thead><tr><th>Player</th>" + COLS.map(c =>
+      '<th><button type="button" data-key="' + c.key + '"' + (c.key === sortKey ? ' aria-sort="' + (sortDir < 0 ? "descending" : "ascending") + '"' : "") + ">" +
+      c.title + '<span class="arrow">' + (c.key === sortKey && sortDir > 0 ? "▲" : "▼") + "</span></button></th>").join("") + "</tr></thead>";
+    const body = "<tbody>" + rows.map(p => '<tr class="' + p.kind + '">' + whoCell(p) + COLS.map(c => metricCell(p[c.key], c)).join("") + "</tr>").join("") + "</tbody>";
+    const t = document.getElementById("board");
+    t.innerHTML = head + body;
+    t.querySelectorAll("th button").forEach(b => b.addEventListener("click", () => {
+      const k = b.dataset.key;
+      if (k === sortKey) sortDir = -sortDir; else { sortKey = k; sortDir = -1; }
+      renderBoard();
+      t.querySelector('th button[data-key="' + k + '"]').focus();
+    }));
+  }
+  renderBoard();
+
+  // ---------- pairing grid ----------
+  const order = DATA.players.slice().sort((a, b) => (a.kind === b.kind ? b.payoff.v - a.payoff.v : a.kind === "model" ? -1 : 1)).map(p => p.name);
+  let measure = "mutual";
+
+  function rgb(name) {
+    const probe = document.createElement("span");
+    probe.style.color = "var(" + name + ")";
+    document.body.appendChild(probe);
+    const m = getComputedStyle(probe).color.match(/\d+(\.\d+)?/g).map(Number);
+    probe.remove();
+    return m.slice(0, 3);
+  }
+  function heat(t) {
+    const lo = rgb("--heat-lo"), mid = rgb("--heat-mid"), hi = rgb("--heat-hi");
+    const [a, b, u] = t < 0.5 ? [lo, mid, t / 0.5] : [mid, hi, (t - 0.5) / 0.5];
+    return "rgb(" + a.map((x, i) => Math.round(x + (b[i] - x) * u)).join(",") + ")";
+  }
+  function pairKey(a, b) { return [a, b].sort().join("|"); }
+
+  function renderGrid() {
+    const sub = measure === "mutual"
+      ? "Share of rounds in which both players chose A, for every pairing (the grid is symmetric). Ten matches per pairing, so the intervals are wide; hover a cell for its interval."
+      : "Mean payoff per round for the row player against the column player (3 is mutual cooperation, 5 is exploiting the opponent every round, 0 is being exploited every round).";
+    document.getElementById("grid-sub").textContent = sub;
+    document.getElementById("scale-lo").textContent = measure === "mutual" ? "0%" : "0";
+    document.getElementById("scale-hi").textContent = measure === "mutual" ? "100%" : "5";
+    let h = '<thead><tr><th></th>' + order.map(n => '<th scope="col"><span>' + esc(short(n)) + "</span></th>").join("") + "</tr></thead><tbody>";
+    for (const r of order) {
+      h += '<tr><th scope="row">' + esc(short(r)) + "</th>";
+      for (const c of order) {
+        let v = null, title = "";
+        if (measure === "mutual") {
+          const e = DATA.mutual[pairKey(r, c)];
+          if (e) { v = e.v; title = label(r) + " and " + label(c) + ": both chose A in " + pct(e.v) + " of rounds (95% interval " + pct(e.lo) + "–" + pct(e.hi) + ")"; }
+        } else {
+          const x = (DATA.payoff[r] || {})[c];
+          if (x != null) { v = x / 5; title = label(r) + " earned " + fix(x) + " per round against " + label(c); }
+        }
+        if (v == null) { h += '<td><span class="empty" title="No matches"></span></td>'; continue; }
+        const text = measure === "mutual" ? pct(v) : fix(v * 5);
+        h += '<td><button type="button" data-r="' + esc(r) + '" data-c="' + esc(c) + '" title="' + esc(title) + '" aria-label="' + esc(title) + '" style="background:' + heat(v) + '">' + text + "</button></td>";
+      }
+      h += "</tr>";
+    }
+    const g = document.getElementById("grid");
+    g.innerHTML = h + "</tbody>";
+    g.querySelectorAll("button").forEach(b => b.addEventListener("click", () => {
+      selectPairing(b.dataset.r, b.dataset.c);
+      document.getElementById("viewer").scrollIntoView({behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth"});
+    }));
+  }
+  document.querySelectorAll(".toggle button").forEach(b => b.addEventListener("click", () => {
+    measure = b.dataset.measure;
+    document.querySelectorAll(".toggle button").forEach(x => x.setAttribute("aria-pressed", x === b ? "true" : "false"));
+    renderGrid();
+  }));
+  renderGrid();
+  matchMedia("(prefers-color-scheme: dark)").addEventListener("change", renderGrid);
+
+  // ---------- match viewer ----------
+  const byPair = new Map();
+  for (const m of DATA.matches) {
+    const k = m.p[0] + "|" + m.p[1];
+    if (!byPair.has(k)) byPair.set(k, []);
+    byPair.get(k).push(m);
+  }
+  const MATCH = Object.fromEntries(DATA.matches.map(m => [m.id, m]));
+  const sel = document.getElementById("pairing");
+  const pairs = [...byPair.keys()].sort((x, y) => {
+    const rank = k => k.split("|").map(n => (P[n].kind === "model" ? 0 : 1)).reduce((a, b) => a + b, 0);
+    return rank(x) - rank(y) || x.localeCompare(y);
+  });
+  sel.innerHTML = pairs.map(k => {
+    const [a, b] = k.split("|");
+    return '<option value="' + esc(k) + '">' + esc(a === b ? label(a) + " vs itself" : label(a) + " vs " + label(b)) + "</option>";
+  }).join("");
+
+  let current = null, step = 0, timer = null;
+
+  function flagsOf(m) {
+    const f = {};
+    for (const [seat, i, text] of m.f) f[seat + ":" + i] = text.replace("truncated", "cut off");
+    return f;
+  }
+
+  function miniStrip(m) {
+    return '<div class="mini" aria-hidden="true">' + m.m.map(s => "<div>" + [...s].map(c => '<i class="' + c + '"></i>').join("") + "</div>").join("") + "</div>";
+  }
+
+  function renderList(key) {
+    const list = byPair.get(key);
+    const el = document.getElementById("mlist");
+    el.innerHTML = list.map((m, i) =>
+      '<button type="button" role="listitem" data-id="' + esc(m.id) + '"' + (current && current.id === m.id ? ' aria-current="true"' : "") + ">" +
+      '<div class="meta"><span>Match ' + (i + 1) + " · " + m.m[0].length + " round" + (m.m[0].length === 1 ? "" : "s") + "</span><b>" + m.s[0] + "–" + m.s[1] + "</b></div>" +
+      miniStrip(m) + "</button>").join("");
+    el.querySelectorAll("button").forEach(b => b.addEventListener("click", () => showMatch(b.dataset.id, true)));
+  }
+
+  function payoffOf(x, y) { return {AA: [3, 3], AB: [0, 5], BA: [5, 0], BB: [1, 1]}[x + y]; }
+
+  function chart(m, upTo) {
+    const n = m.m[0].length, W = Math.max(300, document.getElementById("detail").clientWidth || 640), H = 170, pad = {l: 34, r: 10, t: 12, b: 22};
+    const tot = [[0], [0]];
+    for (let i = 0; i < n; i++) {
+      const p = payoffOf(m.m[0][i], m.m[1][i]);
+      tot[0].push(tot[0][i] + p[0]); tot[1].push(tot[1][i] + p[1]);
+    }
+    const maxY = Math.max(5, 3 * n, tot[0][n], tot[1][n]);
+    const x = i => pad.l + (W - pad.l - pad.r) * (n ? i / n : 0);
+    const y = v => H - pad.b - (H - pad.t - pad.b) * v / maxY;
+    const line = (s, color, dash) => '<polyline fill="none" stroke="' + color + '" stroke-width="2.5" stroke-linejoin="round"' + (dash ? ' stroke-dasharray="5 4"' : "") +
+      ' points="' + s.slice(0, upTo + 1).map((v, i) => x(i).toFixed(1) + "," + y(v).toFixed(1)).join(" ") + '"/>';
+    const ref = '<polyline fill="none" stroke="var(--line-strong)" stroke-width="1" stroke-dasharray="2 4" points="' + x(0) + "," + y(0) + " " + x(n) + "," + y(3 * n) + '"/>';
+    return '<div class="chart"><svg width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + " " + H + '" role="img" aria-label="Running score of both players">' +
+      '<line class="axis" x1="' + pad.l + '" x2="' + (W - pad.r) + '" y1="' + y(0) + '" y2="' + y(0) + '"/>' +
+      '<text x="' + (pad.l - 6) + '" y="' + (y(0) + 4) + '" text-anchor="end">0</text>' +
+      '<text x="' + (pad.l - 6) + '" y="' + (y(maxY) + 8) + '" text-anchor="end">' + maxY + "</text>" +
+      '<text x="' + (W - pad.r) + '" y="' + (H - 6) + '" text-anchor="end">round ' + n + "</text>" +
+      ref + line(tot[1], "var(--text-3)", true) + line(tot[0], "var(--text)", false) + "</svg>" +
+      '<div class="legend" style="margin-top:6px"><span><b>Running score:</b></span><span><svg width="22" height="8" class="swatch"><line x1="0" y1="4" x2="22" y2="4" stroke="var(--text)" stroke-width="2.5"/></svg>' + esc(label(m.p[0])) + "</span>" +
+      '<span><svg width="22" height="8" class="swatch"><line x1="0" y1="4" x2="22" y2="4" stroke="var(--text-3)" stroke-width="2.5" stroke-dasharray="5 4"/></svg>' + esc(m.p[0] === m.p[1] ? label(m.p[1]) + " (second seat)" : label(m.p[1])) + "</span>" +
+      '<span><svg width="22" height="8" class="swatch"><line x1="0" y1="4" x2="22" y2="4" stroke="var(--line-strong)" stroke-width="1.5" stroke-dasharray="2 4"/></svg>both always A (3 points a round)</span></div></div>';
+  }
+
+  function narrate(m, k) {
+    const n = m.m[0].length, a = label(m.p[0]), b = m.p[0] === m.p[1] ? label(m.p[1]) + " (second seat)" : label(m.p[1]);
+    if (k === 0) return "Before round 1. Press <b>Next</b> or the right arrow to play the match one round at a time.";
+    const i = k - 1, x = m.m[0][i], y = m.m[1][i], p = payoffOf(x, y);
+    let s0 = 0, s1 = 0;
+    for (let j = 0; j < k; j++) { const q = payoffOf(m.m[0][j], m.m[1][j]); s0 += q[0]; s1 += q[1]; }
+    const f = flagsOf(m);
+    const notes = [0, 1].map(seat => f[seat + ":" + i] ? " (" + (seat ? b : a) + ": " + f[seat + ":" + i] + ")" : "").join("");
+    return "<b>Round " + k + " of " + n + ":</b> " + esc(a) + " chose <b>" + x + "</b>, " + esc(b) + " chose <b>" + y + "</b>, scoring " + p[0] + " and " + p[1] + "." + esc(notes) +
+      " Totals: " + s0 + "–" + s1 + "." + (k === n ? " The match ended after this round." : "");
+  }
+
+  function renderDetail() {
+    const m = current, n = m.m[0].length, f = flagsOf(m);
+    const a = label(m.p[0]), b = m.p[0] === m.p[1] ? label(m.p[1]) + " (2)" : label(m.p[1]);
+    let s0 = 0, s1 = 0;
+    for (let j = 0; j < step; j++) { const q = payoffOf(m.m[0][j], m.m[1][j]); s0 += q[0]; s1 += q[1]; }
+    const cols = [];
+    for (let i = 0; i < n; i++) {
+      const cls = i + 1 === step ? "col now" : i >= step ? "col future" : "col";
+      const cell = seat => {
+        const fl = f[seat + ":" + i];
+        return '<span class="mv ' + m.m[seat][i] + '"' + (fl ? ' data-flag="' + esc(fl) + '" title="' + esc(fl) + '"' : "") + ">" + m.m[seat][i] + "</span>";
+      };
+      cols.push('<div class="' + cls + '" data-k="' + (i + 1) + '"><span class="n">' + (i + 1) + "</span>" + cell(0) + cell(1) + "</div>");
+    }
+    const hasFlags = m.f.length > 0;
+    document.getElementById("detail").innerHTML =
+      '<div class="dhead"><div class="score">' + esc(a) + " " + s0 + '<span class="vs">–</span>' + s1 + " " + esc(b) + "</div>" +
+      '<div class="controls"><button type="button" data-go="first" aria-label="Before round 1">⏮</button>' +
+      '<button type="button" data-go="prev" aria-label="Previous round">◀</button>' +
+      '<button type="button" data-go="play" aria-label="' + (timer ? "Pause" : "Play") + '">' + (timer ? "Pause" : "Play") + "</button>" +
+      '<button type="button" data-go="next" aria-label="Next round">Next ▶</button>' +
+      '<button type="button" data-go="last" aria-label="Show the whole match">⏭</button></div></div>' +
+      '<div class="rounds"><div class="names"><span></span><span>' + esc(short(m.p[0])) + "</span><span>" + esc(m.p[0] === m.p[1] ? short(m.p[1]) + " (2)" : short(m.p[1])) + "</span></div>" +
+      '<div class="cols">' + cols.join("") + "</div></div>" +
+      '<p class="narrate">' + narrate(m, step) + "</p>" +
+      chart(m, step) +
+      (hasFlags ? '<div class="legend"><span><span class="swatch" style="display:inline-block;width:9px;height:9px;border-radius:50%;background:#f5b400"></span>A dot marks a round where the model needed a retry, forfeited, or was cut off.</span></div>' : "") +
+      '<p class="share">Match <code>' + esc(m.id) + '</code> · <a href="#match=' + encodeURIComponent(m.id) + '">link to this match</a></p>';
+    const d = document.getElementById("detail");
+    d.querySelectorAll("[data-go]").forEach(btn => btn.addEventListener("click", () => go(btn.dataset.go)));
+    d.querySelectorAll(".col").forEach(c => c.addEventListener("click", () => { stop(); step = +c.dataset.k; renderDetail(); }));
+    d.querySelector('[data-go="first"]').disabled = d.querySelector('[data-go="prev"]').disabled = step === 0;
+    d.querySelector('[data-go="next"]').disabled = d.querySelector('[data-go="last"]').disabled = step === n;
+  }
+
+  function stop() { if (timer) { clearInterval(timer); timer = null; } }
+  function go(what) {
+    const n = current.m[0].length;
+    if (what === "play") {
+      if (timer) { stop(); renderDetail(); return; }
+      if (step >= n) step = 0;
+      timer = setInterval(() => { step++; if (step >= n) stop(); renderDetail(); }, 550);
+      step = Math.min(step + 1, n);
+    } else {
+      stop();
+      step = what === "first" ? 0 : what === "last" ? n : what === "prev" ? Math.max(0, step - 1) : Math.min(n, step + 1);
+    }
+    renderDetail();
+  }
+
+  function showMatch(id, fromList) {
+    stop();
+    current = MATCH[id];
+    step = current.m[0].length;
+    const key = current.p[0] + "|" + current.p[1];
+    sel.value = key;
+    renderList(key);
+    renderDetail();
+    if (fromList) history.replaceState(null, "", "#match=" + encodeURIComponent(id));
+  }
+
+  function selectPairing(r, c) {
+    const key = byPair.has(r + "|" + c) ? r + "|" + c : c + "|" + r;
+    if (!byPair.has(key)) return;
+    showMatch(byPair.get(key)[0].id, true);
+  }
+
+  sel.addEventListener("change", () => showMatch(byPair.get(sel.value)[0].id, true));
+  let resizeTimer = null, lastWidth = innerWidth;
+  addEventListener("resize", () => {
+    if (innerWidth === lastWidth) return;
+    lastWidth = innerWidth;
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(() => current && renderDetail(), 150);
+  });
+  document.addEventListener("keydown", e => {
+    if (!current || e.target.closest("select, input, textarea")) return;
+    const v = document.getElementById("viewer").getBoundingClientRect();
+    if (v.bottom < 0 || v.top > innerHeight) return;
+    if (e.key === "ArrowRight") { go("next"); e.preventDefault(); }
+    if (e.key === "ArrowLeft") { go("prev"); e.preventDefault(); }
+  });
+
+  function matchFromHash() {
+    const id = decodeURIComponent((location.hash.match(/match=([^&]+)/) || [])[1] || "");
+    return MATCH[id] ? id : null;
+  }
+  const fromHash = matchFromHash();
+  showMatch(fromHash || DATA.featured, false);
+  if (fromHash) document.getElementById("viewer").scrollIntoView();
+  addEventListener("hashchange", () => {
+    const id = matchFromHash();
+    if (id && (!current || current.id !== id)) { showMatch(id, false); document.getElementById("viewer").scrollIntoView(); }
+  });
+
+  // ---------- notes and footer ----------
+  document.getElementById("notes-body").innerHTML = DATA.notes_html;
+  if (!DATA.notes_html) document.getElementById("notes").hidden = true;
+  document.getElementById("footer-text").innerHTML =
+    "Generated from <a href=\"" + DATA.repo + "/tree/main/" + esc(run.path) + "\"><code>" + esc(run.path) + "</code></a>. " +
+    "CI replays that run from its recorded model calls on every push and fails if any match differs, so this page cannot drift from the data. " +
+    "Settings: temperature " + run.temperature + ", " + Math.round(run.end_probability * 100) + "% chance the game ends after each round, tournament seed " + run.seed + ". " +
+    "<a href=\"" + DATA.repo + "\">Code, design notes and raw data</a>.";
+})();
+</script>
+</body>
+</html>

@@ -20,6 +20,9 @@ build-backend = "setuptools.build_meta"
 [tool.setuptools.packages.find]
 include = ["tit_for_token*"]
 
+[tool.setuptools.package-data]
+tit_for_token = ["site_template.html"]
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 
