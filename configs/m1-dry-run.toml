@@ -58,6 +58,7 @@ output_usd_per_million = 2.50
 name = "deepseek-flash"
 model = "deepseek/deepseek-v4.1-flash"
 reasoning = "low"
+max_tokens = 4000   # thinks at length even at low effort: median ~520 tokens, longest over 2,000 in the dry run
 concurrency = 4
 [models.price]
 input_usd_per_million = 0.05
