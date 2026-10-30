@@ -49,7 +49,13 @@ Decisions and why:
   one match per pairing checks the cut-off rate is zero before money is
   spent on the full run.
 - **Sampling.** Fixed temperature and settings per model, recorded with every
-  call.
+  call. Every model in a tournament plays under the same reasoning condition
+  (milestone 1: low reasoning effort, 2,000-token cap), so a difference
+  between models is not a difference between thinking and not thinking. The
+  first dry run showed why this matters: Haiku reasons by default and was
+  cut off at a 50-token cap, and Qwen3 32B ignored the low-effort setting,
+  was cut off on most calls, and took about 27 seconds per call, so it was
+  replaced by DeepSeek V4.1 Flash.
 
 ## Players
 

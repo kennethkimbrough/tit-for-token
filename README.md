@@ -81,8 +81,8 @@ Before a live run, check the model ids and prices in the config against
 [openrouter.ai/models](https://openrouter.ai/models): the prices feed the
 spending cap. Then do a dry run with `matches_per_pairing = 1` (about 400
 calls) and check the report's "Cut off" column is 0% for every model.
-`configs/m1-small-models.toml` (four small models from different labs, five
-bots, ten matches per pairing) is about 4,000 calls.
+`configs/m1-small-models.toml` (four small models from different labs, all at
+low reasoning effort, five bots, ten matches per pairing) is about 4,000 calls.
 
 ## Layout
 

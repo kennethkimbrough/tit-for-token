@@ -4,26 +4,31 @@
 # before running, and put each model's prices here so the spending cap is accurate.
 # Set OPENROUTER_API_KEY in the environment. Never put a key in this file.
 #
-# Reasoning models count their hidden reasoning against max_tokens, so each one gets an explicit
-# low reasoning effort and a larger max_tokens. Do a dry run first (matches_per_pairing = 1) and
-# check the "Cut off" column of the report is 0% for every model before the full run.
+# All four models reason, and providers count hidden reasoning against max_tokens. So every model
+# plays under the same condition, low reasoning effort, with a 2,000-token cap that leaves room for
+# the answer after the thinking. The README states this condition with the results.
+# Do a dry run first and check the report's "Cut off" and "Forfeits" columns are 0% for every model.
+
 
 name = "m1-small-models"
 seed = 20261030
 matches_per_pairing = 10
 end_probability = 0.1
-spending_cap_usd = 10.0   # the reasoning models make this a few dollars; the cap stops the run cleanly if the prices are off
+spending_cap_usd = 8.0
 self_play = true
 
 bots = ["always-cooperate", "always-defect", "tit-for-tat", "grim-trigger", "random"]
 
 [model_defaults]
 temperature = 0.7
-max_tokens = 50
+max_tokens = 2000
+
+# Prices are USD per million tokens, rounded up from OpenRouter's listings so the cap errs on the safe side.
 
 [[models]]
 name = "haiku"
 model = "anthropic/claude-haiku-5.5"
+reasoning = "low"
 concurrency = 4
 [models.price]
 input_usd_per_million = 1.00
@@ -32,9 +37,8 @@ output_usd_per_million = 5.00
 [[models]]
 name = "gpt-mini"
 model = "openai/gpt-5-mini"
-concurrency = 4
 reasoning = "low"
-max_tokens = 800
+concurrency = 4
 [models.price]
 input_usd_per_million = 0.25
 output_usd_per_million = 2.00
@@ -42,19 +46,17 @@ output_usd_per_million = 2.00
 [[models]]
 name = "gemini-flash"
 model = "google/gemini-2.5-flash"
-concurrency = 4
 reasoning = "low"
-max_tokens = 800
+concurrency = 4
 [models.price]
 input_usd_per_million = 0.30
 output_usd_per_million = 2.50
 
 [[models]]
-name = "qwen"
-model = "qwen/qwen3-32b"
-concurrency = 4
+name = "deepseek-flash"
+model = "deepseek/deepseek-v4.1-flash"
 reasoning = "low"
-max_tokens = 800
+concurrency = 4
 [models.price]
-input_usd_per_million = 0.10
-output_usd_per_million = 0.30
+input_usd_per_million = 0.05
+output_usd_per_million = 1.00
