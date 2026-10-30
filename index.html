@@ -1,0 +1,594 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>tit-for-token: results</title>
+<meta name="description" content="Round-robin prisoner's dilemma tournaments between language models and classic strategies, with recorded, replayable runs and confidence intervals.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #f3f4ef;
+  --surface: #ffffff;
+  --surface-2: #f8f9f5;
+  --line: #e3e5de;
+  --line-strong: #cfd3c8;
+  --text: #14171c;
+  --text-2: #424852;
+  --text-3: #6b717a;
+  --a: #0f9d8a;
+  --a-ink: #0b7a6b;
+  --b: #d9472f;
+  --b-ink: #b33a25;
+  --heat-lo: #f2c4b9;
+  --heat-mid: #f1f0ea;
+  --heat-hi: #b6e2d9;
+  --band: rgba(20, 23, 28, 0.22);
+  --tick: #14171c;
+  --focus: #0f9d8a;
+  --shadow: 0 1px 2px rgba(20, 23, 28, 0.05), 0 8px 28px rgba(20, 23, 28, 0.06);
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #101317;
+    --surface: #171b21;
+    --surface-2: #1d2229;
+    --line: #2a3038;
+    --line-strong: #39414b;
+    --text: #eef0f2;
+    --text-2: #c3c8cf;
+    --text-3: #8d949e;
+    --a: #2fbfaa;
+    --a-ink: #5fd4c2;
+    --b: #ec6a52;
+    --b-ink: #f08a76;
+    --heat-lo: #5a2c25;
+    --heat-mid: #22272e;
+    --heat-hi: #1f5249;
+    --band: rgba(238, 240, 242, 0.25);
+    --tick: #eef0f2;
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 8px 28px rgba(0, 0, 0, 0.25);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #101317; --surface: #171b21; --surface-2: #1d2229; --line: #2a3038; --line-strong: #39414b;
+  --text: #eef0f2; --text-2: #c3c8cf; --text-3: #8d949e; --a: #2fbfaa; --a-ink: #5fd4c2; --b: #ec6a52; --b-ink: #f08a76;
+  --heat-lo: #5a2c25; --heat-mid: #22272e; --heat-hi: #1f5249; --band: rgba(238, 240, 242, 0.25); --tick: #eef0f2;
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 8px 28px rgba(0, 0, 0, 0.25); color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0; background: var(--bg); color: var(--text);
+  font: 16px/1.55 "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-feature-settings: "tnum" 1, "cv11" 1;
+}
+a { color: var(--a-ink); text-underline-offset: 2px; }
+a:hover { text-decoration-thickness: 2px; }
+code, .mono { font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.92em; }
+button, select { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; border-radius: 4px; }
+
+.wrap { max-width: 1100px; margin: 0 auto; padding-left: 24px; padding-right: 24px; }
+@media (max-width: 640px) { .wrap { padding-left: 16px; padding-right: 16px; } }
+
+header.top { padding-top: 56px; padding-bottom: 28px; }
+.kicker { font-family: "JetBrains Mono", monospace; font-weight: 700; color: var(--a-ink); font-size: 15px; letter-spacing: 0.3px; }
+h1 { font-size: clamp(30px, 5vw, 46px); line-height: 1.08; letter-spacing: -1px; margin: 10px 0 16px; font-weight: 800; max-width: 20ch; }
+.lead { font-size: 18px; color: var(--text-2); max-width: 66ch; margin: 0 0 22px; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 18px; }
+.chip { background: var(--surface); border: 1px solid var(--line); border-radius: 999px; padding: 5px 12px; font-size: 14px; color: var(--text-2); }
+.chip b { color: var(--text); font-weight: 700; }
+.links { display: flex; flex-wrap: wrap; gap: 18px; font-size: 15px; font-weight: 600; }
+
+section { margin: 0 0 28px; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; box-shadow: var(--shadow); padding: 24px; }
+@media (max-width: 640px) { .card { padding: 18px 14px; border-radius: 14px; } }
+h2 { font-size: 22px; letter-spacing: -0.3px; margin: 0 0 6px; }
+.sub { color: var(--text-3); font-size: 14.5px; margin: 0 0 18px; max-width: 75ch; }
+
+/* The game */
+.game { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 28px; align-items: center; }
+@media (max-width: 760px) { .game { grid-template-columns: 1fr; gap: 18px; } }
+.game p { margin: 0 0 10px; color: var(--text-2); }
+.game p:last-child { margin-bottom: 0; }
+table.payoffs { border-collapse: separate; border-spacing: 4px; font-size: 15px; }
+table.payoffs th { font-weight: 600; color: var(--text-3); font-size: 13px; padding: 2px 6px; }
+table.payoffs td { width: 92px; height: 50px; text-align: center; border-radius: 10px; font-weight: 700; background: var(--surface-2); border: 1px solid var(--line); }
+table.payoffs td small { display: block; font-weight: 500; color: var(--text-3); font-size: 12px; }
+
+/* Moves */
+.mv { display: inline-flex; align-items: center; justify-content: center; border-radius: 5px; color: #fff; font-family: "JetBrains Mono", monospace; font-weight: 700; }
+.mv.A { background: var(--a); }
+.mv.B { background: var(--b); }
+
+/* Leaderboard */
+.scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+table.board { width: 100%; border-collapse: collapse; min-width: 820px; }
+table.board th { text-align: left; font-size: 12.5px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-3); font-weight: 700; padding: 0 12px 10px; border-bottom: 1px solid var(--line-strong); white-space: nowrap; }
+table.board th button { background: none; border: 0; padding: 0; cursor: pointer; text-transform: inherit; letter-spacing: inherit; font-weight: inherit; color: inherit; display: inline-flex; align-items: center; gap: 4px; }
+table.board th button[aria-sort] { color: var(--text); }
+table.board th button .arrow { opacity: 0.35; font-size: 11px; }
+table.board th button[aria-sort] .arrow { opacity: 1; }
+table.board td { padding: 12px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+table.board tr:last-child td { border-bottom: 0; }
+table.board tr.bot .who b { font-weight: 600; color: var(--text-2); }
+.who { min-width: 220px; }
+.who b { display: block; font-weight: 700; }
+.who > span { display: block; font-size: 12.5px; color: var(--text-3); margin-top: 2px; }
+.who .tag, .tag { display: inline-block; font-size: 10.5px; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase; border-radius: 4px; padding: 1px 5px; margin-left: 6px; vertical-align: 2px; }
+.tag.model { background: color-mix(in srgb, var(--a) 16%, transparent); color: var(--a-ink); }
+.tag.bot { background: var(--surface-2); color: var(--text-3); border: 1px solid var(--line); }
+.metric { min-width: 120px; white-space: nowrap; }
+.metric .num { font-weight: 700; font-size: 15px; }
+.metric .ci { font-size: 12px; color: var(--text-3); margin-left: 4px; }
+.track { position: relative; height: 8px; border-radius: 4px; background: var(--surface-2); border: 1px solid var(--line); margin-top: 6px; }
+.track .band { position: absolute; top: 1px; bottom: 1px; border-radius: 3px; background: var(--band); }
+.track .tick { position: absolute; top: -3px; width: 3px; height: 12px; margin-left: -1.5px; border-radius: 2px; background: var(--tick); }
+.na { color: var(--text-3); }
+.legend { display: flex; flex-wrap: wrap; gap: 16px; font-size: 13px; color: var(--text-3); margin-top: 14px; }
+.legend .swatch { display: inline-block; vertical-align: -1px; margin-right: 5px; }
+
+/* Pairing grid */
+.toggle { display: inline-flex; background: var(--surface-2); border: 1px solid var(--line); border-radius: 10px; padding: 3px; margin-bottom: 16px; }
+.toggle button { border: 0; background: none; padding: 6px 12px; border-radius: 7px; font-size: 14px; font-weight: 600; color: var(--text-3); cursor: pointer; }
+.toggle button[aria-pressed="true"] { background: var(--surface); color: var(--text); box-shadow: 0 1px 2px rgba(0,0,0,0.08); }
+table.grid { border-collapse: separate; border-spacing: 3px; }
+table.grid th { font-size: 12.5px; font-weight: 600; color: var(--text-2); padding: 4px; white-space: nowrap; }
+table.grid thead th { height: 92px; vertical-align: bottom; }
+table.grid thead th span { display: inline-block; writing-mode: vertical-rl; transform: rotate(180deg); }
+table.grid tbody th { text-align: right; padding-right: 8px; }
+table.grid td { padding: 0; }
+table.grid td button { width: 64px; height: 44px; border: 0; border-radius: 7px; cursor: pointer; font-size: 13px; font-weight: 700; color: var(--text); }
+table.grid td button:hover { outline: 2px solid var(--text); outline-offset: -2px; }
+table.grid td .empty { display: block; width: 64px; height: 44px; border-radius: 7px; background: repeating-linear-gradient(135deg, transparent 0 6px, var(--line) 6px 7px); }
+@media (max-width: 640px) { table.grid td button, table.grid td .empty { width: 48px; height: 38px; font-size: 12px; } }
+.scale { display: flex; align-items: center; gap: 8px; font-size: 12.5px; color: var(--text-3); margin-top: 12px; }
+.scale .bar { width: 160px; height: 10px; border-radius: 5px; background: linear-gradient(90deg, var(--heat-lo), var(--heat-mid), var(--heat-hi)); border: 1px solid var(--line); }
+
+/* Match viewer */
+.picker { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin-bottom: 14px; }
+.picker label { font-size: 14px; font-weight: 600; color: var(--text-2); }
+.picker select { background: var(--surface); border: 1px solid var(--line-strong); border-radius: 9px; padding: 8px 12px; font-size: 15px; max-width: 100%; }
+.mlist { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 8px; margin-bottom: 18px; }
+@media (max-width: 640px) { .mlist { grid-template-columns: repeat(2, minmax(0, 1fr)); } .mlist .meta { flex-direction: column; } }
+.mlist button { text-align: left; background: var(--surface-2); border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px; cursor: pointer; }
+.mlist button[aria-current="true"] { border-color: var(--text); background: var(--surface); box-shadow: 0 0 0 1px var(--text); }
+.mlist .meta { font-size: 12.5px; color: var(--text-3); display: flex; justify-content: space-between; margin-bottom: 5px; }
+.mlist .meta b { color: var(--text); }
+.mini { display: flex; flex-direction: column; gap: 2px; }
+.mini div { display: flex; gap: 1px; }
+.mini i { width: 5px; height: 5px; border-radius: 1px; display: block; }
+.mini i.A { background: var(--a); } .mini i.B { background: var(--b); }
+
+.detail { border-top: 1px solid var(--line); padding-top: 18px; }
+.dhead { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 10px; margin-bottom: 14px; }
+.score { font-size: 20px; font-weight: 800; letter-spacing: -0.3px; }
+.score .vs { color: var(--text-3); font-weight: 600; margin: 0 6px; }
+.controls { display: flex; gap: 6px; align-items: center; }
+.controls button { background: var(--surface-2); border: 1px solid var(--line-strong); border-radius: 8px; height: 34px; min-width: 38px; padding: 0 10px; cursor: pointer; font-weight: 600; font-size: 14px; }
+.controls button:disabled { opacity: 0.4; cursor: default; }
+.rounds { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 6px 10px; align-items: start; }
+.names { display: grid; grid-template-rows: 18px 28px 28px; gap: 3px; font-size: 13px; font-weight: 600; color: var(--text-2); white-space: nowrap; }
+.names span { display: flex; align-items: center; }
+.cols { display: flex; flex-wrap: wrap; gap: 10px 3px; }
+.col { display: grid; grid-template-rows: 18px 28px 28px; gap: 3px; text-align: center; cursor: pointer; border-radius: 6px; }
+.col .n { font-size: 10.5px; color: var(--text-3); line-height: 18px; }
+.col .mv { width: 26px; height: 28px; font-size: 12px; position: relative; }
+.col.future .mv { opacity: 0.18; }
+.col.now .n { color: var(--text); font-weight: 800; }
+.col.now .mv { box-shadow: 0 0 0 2px var(--surface), 0 0 0 4px var(--text); }
+.col .mv[data-flag]::after { content: ""; position: absolute; top: -3px; right: -3px; width: 8px; height: 8px; border-radius: 50%; background: #f5b400; border: 1.5px solid var(--surface); }
+.narrate { margin: 16px 0 0; padding: 12px 14px; background: var(--surface-2); border-radius: 10px; font-size: 15px; color: var(--text-2); min-height: 48px; }
+.narrate b { color: var(--text); }
+.chart { margin-top: 14px; }
+.chart > svg { display: block; }
+.chart .axis { stroke: var(--line-strong); }
+.chart text { fill: var(--text-3); font-size: 11px; font-family: "Inter", sans-serif; }
+.share { font-size: 13px; color: var(--text-3); margin-top: 10px; }
+
+/* Notes */
+.notes h3 { font-size: 18px; margin: 0 0 10px; }
+.notes h3:not(:first-child) { margin-top: 22px; }
+.notes p, .notes li { color: var(--text-2); }
+.notes ul { padding-left: 20px; margin: 0; }
+.notes li { margin-bottom: 8px; }
+.notes strong { color: var(--text); }
+
+footer { padding-top: 8px; padding-bottom: 48px; color: var(--text-3); font-size: 14px; }
+footer p { max-width: 75ch; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+<header class="top wrap">
+  <div class="kicker">tit-for-token</div>
+  <h1>How language models play the prisoner's dilemma</h1>
+  <p class="lead">Four small models from different labs and five classic strategies played every other player ten times in a repeated two-player game. Every model call was recorded, so every number and every move on this page can be replayed exactly from the committed run.</p>
+  <div class="chips" id="chips"></div>
+  <div class="links">
+    <a id="repo-link" href="#">Code and data on GitHub</a>
+    <a href="#viewer">Step through a match</a>
+    <a href="#notes">Findings and conditions</a>
+  </div>
+</header>
+
+<main class="wrap">
+  <section class="card" aria-labelledby="game-h">
+    <div class="game">
+      <div>
+        <h2 id="game-h">The game</h2>
+        <p>Each round, both players choose A or B at the same time. Choosing A together pays best overall, but B pays more to whoever chooses it against an A. After every round the game ends with a 10% chance, so nobody knows which round is the last.</p>
+        <p>Models see only the payoff table and the history so far, never the words "cooperate", "defect" or the game's name. A is cooperating, B is defecting.</p>
+      </div>
+      <table class="payoffs" aria-label="Payoff per round, yours then theirs">
+        <tr><th></th><th>They play <span class="mv A" style="width:20px;height:20px;font-size:11px">A</span></th><th>They play <span class="mv B" style="width:20px;height:20px;font-size:11px">B</span></th></tr>
+        <tr><th>You play <span class="mv A" style="width:20px;height:20px;font-size:11px">A</span></th><td>3, 3<small>both cooperate</small></td><td>0, 5<small>you are exploited</small></td></tr>
+        <tr><th>You play <span class="mv B" style="width:20px;height:20px;font-size:11px">B</span></th><td>5, 0<small>you exploit</small></td><td>1, 1<small>both defect</small></td></tr>
+      </table>
+    </div>
+  </section>
+
+  <section class="card" aria-labelledby="board-h">
+    <h2 id="board-h">Leaderboard</h2>
+    <p class="sub">The dark tick marks each estimate and the grey band its 95% confidence interval, from 2,000 bootstrap resamples of matches. Differences inside the bands are not findings. Click a column heading to sort.</p>
+    <div class="scroll"><table class="board" id="board"></table></div>
+    <div class="legend">
+      <span><b>Retaliates:</b> plays B in the round after the opponent played B.</span>
+      <span><b>Forgives:</b> plays A in the round after retaliating.</span>
+      <span><b>vs Always A:</b> payoff per round against an unconditional cooperator; 3 means cooperating with it, 5 means exploiting it.</span>
+    </div>
+  </section>
+
+  <section class="card" aria-labelledby="grid-h">
+    <h2 id="grid-h">Every pairing</h2>
+    <p class="sub" id="grid-sub"></p>
+    <div class="toggle" role="group" aria-label="Measure">
+      <button type="button" data-measure="mutual" aria-pressed="true">Both chose A</button>
+      <button type="button" data-measure="payoff" aria-pressed="false">Payoff per round</button>
+    </div>
+    <div class="scroll"><table class="grid" id="grid"></table></div>
+    <div class="scale"><span id="scale-lo"></span><span class="bar"></span><span id="scale-hi"></span><span>· striped: no self-play for bots · click a cell to watch its matches</span></div>
+  </section>
+
+  <section class="card" id="viewer" aria-labelledby="viewer-h">
+    <h2 id="viewer-h">Match viewer</h2>
+    <p class="sub">Every recorded match, round by round. Use the arrow keys or the buttons to step through it, or click a round.</p>
+    <div class="picker">
+      <label for="pairing">Pairing</label>
+      <select id="pairing"></select>
+    </div>
+    <div class="mlist" id="mlist" role="list"></div>
+    <div class="detail" id="detail" aria-live="polite"></div>
+  </section>
+
+  <section class="card notes" id="notes" aria-label="Findings and conditions">
+    <div id="notes-body"></div>
+  </section>
+</main>
+
+<footer class="wrap">
+  <p id="footer-text"></p>
+</footer>
+
+<script id="data" type="application/json">{"featured":"haiku--gemini-flash--003","matches":[{"f":[],"id":"always-cooperate--always-defect--000","m":["AAAAAAAAAAAAAA","BBBBBBBBBBBBBB"],"p":["always-cooperate","always-defect"],"s":[0,70]},{"f":[],"id":"always-cooperate--always-defect--001","m":["AAAAAAAAAAAAA","BBBBBBBBBBBBB"],"p":["always-cooperate","always-defect"],"s":[0,65]},{"f":[],"id":"always-cooperate--always-defect--002","m":["A","B"],"p":["always-cooperate","always-defect"],"s":[0,5]},{"f":[],"id":"always-cooperate--always-defect--003","m":["A","B"],"p":["always-cooperate","always-defect"],"s":[0,5]},{"f":[],"id":"always-cooperate--always-defect--004","m":["AAA","BBB"],"p":["always-cooperate","always-defect"],"s":[0,15]},{"f":[],"id":"always-cooperate--always-defect--005","m":["AA","BB"],"p":["always-cooperate","always-defect"],"s":[0,10]},{"f":[],"id":"always-cooperate--always-defect--006","m":["AAAAAAAAAAAAAAA","BBBBBBBBBBBBBBB"],"p":["always-cooperate","always-defect"],"s":[0,75]},{"f":[],"id":"always-cooperate--always-defect--007","m":["AAAAA","BBBBB"],"p":["always-cooperate","always-defect"],"s":[0,25]},{"f":[],"id":"always-cooperate--always-defect--008","m":["AAAAAAAAAAAAAAAAAAAAAAAAAAA","BBBBBBBBBBBBBBBBBBBBBBBBBBB"],"p":["always-cooperate","always-defect"],"s":[0,135]},{"f":[],"id":"always-cooperate--always-defect--009","m":["AAA","BBB"],"p":["always-cooperate","always-defect"],"s":[0,15]},{"f":[],"id":"always-cooperate--deepseek-flash--000","m":["AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA","AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"],"p":["always-cooperate","deepseek-flash"],"s":[114,114]},{"f":[],"id":"always-cooperate--deepseek-flash--001","m":["AAAAAAAAA","AAAAAAAAA"],"p":["always-cooperate","deepseek-flash"],"s":[27,27]},{"f":[],"id":"always-cooperate--deepseek-flash--002","m":["A","A"],"p":["always-cooperate","deepseek-flash"],"s":[3,3]},{"f":[],"id":"always-cooperate--deepseek-flash--003","m":["AAAAAAAAA","AAAAAAAAA"],"p":["always-cooperate","deepseek-flash"],"s":[27,27]},{"f":[],"id":"always-cooperate--deepseek-flash--004","m":["AA","AA"],"p":["always-cooperate","deepseek-flash"],"s":[6,6]},{"f":[],"id":"always-cooperate--deepseek-flash--005","m":["A","A"],"p":["always-cooperate","deepseek-flash"],"s":[3,3]},{"f":[],"id":"always-cooperate--deepseek-flash--006","m":["A","A"],"p":["always-cooperate","deepseek-flash"],"s":[3,3]},{"f":[],"id":"always-cooperate--deepseek-flash--007","m":["AAAA","AAAA"],"p":["always-cooperate","deepseek-flash"],"s":[12,12]},{"f":[],"id":"always-cooperate--deepseek-flash--008","m":["AAAAAAAA","AAAAAAAA"],"p":["always-cooperate","deepseek-flash"],"s":[24,24]},{"f":[],"id":"always-cooperate--deepseek-flash--009","m":["AAAAAAAA","AAAAAAAA"],"p":["always-cooperate","deepseek-flash"],"s":[24,24]},{"f":[],"id":"always-cooperate--gemini-flash--000","m":["AAAA","AAAA"],"p":["always-cooperate","gemini-flash"],"s":[12,12]},{"f":[],"id":"always-cooperate--gemini-flash--001","m":["AAAAAAAAAAAAAAAAAAAAAAAAAAA","AAAAAAAAAAAAAAAAAAAAAAAAAAA"],"p":["always-cooperate","gemini-flash"],"s":[81,81]},{"f":[],"id":"always-cooperate--gemini-flash--002","m":["AAAAAAAAAAAAAAAAAAAAAA","AAAAAAAAAAAAAAAAAAAAAA"],"p":["always-cooperate","gemini-flash"],"s":[66,66]},{"f":[],"id":"always-cooperate--gemini-flash--003","m":["AAAAAAA","AAAAAAA"],"p":["always-cooperate","gemini-flash"],"s":[21,21]},{"f":[],"id":"always-cooperate--gemini-flash--004","m":["AAAAAAAAAAA","AAAAAAAAAAA"],"p":["always-cooperate","gemini-flash"],"s":[33,33]},{"f":[],"id":"always-cooperate--gemini-flash--005","m":["AAAAAAAA","AAAAAAAA"],"p":["always-cooperate","gemini-flash"],"s":[24,24]},{"f":[],"id":"always-cooperate--gemini-flash--006","m":["AA","AA"],"p":["always-cooperate","gemini-flash"],"s":[6,6]},{"f":[],"id":"always-cooperate--gemini-flash--007","m":["AAAAAAAAAAAAA","BBBBBBBBBBBBB"],"p":["always-cooperate","gemini-flash"],"s":[0,65]},{"f":[],"id":"always-cooperate--gemini-flash--008","m":["AAAAAAAAAAAAAAAAAAA","AAAAAAAAAAAAAAAAAAA"],"p":["always-cooperate","gemini-flash"],"s":[57,57]},{"f":[],"id":"always-cooperate--gemini-flash--009","m":["AAAAAAAAAAA","BBBBBBBBBBB"],"p":["always-cooperate","gemini-flash"],"s":[0,55]},{"f":[],"id":"always-cooperate--gpt-mini--000","m":["A","A"],"p":["always-cooperate","gpt-mini"],"s":[3,3]},{"f":[],"id":"always-cooperate--gpt-mini--001","m":["AAAAAAAA","AAAAAAAA"],"p":["always-cooperate","gpt-mini"],"s":[24,24]},{"f":[],"id":"always-cooperate--gpt-mini--002","m":["AA","AA"],"p":["always-cooperate","gpt-mini"],"s":[6,6]},{"f":[],"id":"always-cooperate--gpt-mini--003","m":["A","A"],"p":["always-cooperate","gpt-mini"],"s":[3,3]},{"f":[],"id":"always-cooperate--gpt-mini--004","m":["AAAAAAAAAAAA","AAAAAAAAAAAA"],"p":["always-cooperate","gpt-mini"],"s":[36,36]},{"f":[],"id":"always-cooperate--gpt-mini--005","m":["AAAAAA","AAAAAA"],"p":["always-cooperate","gpt-mini"],"s":[18,18]},{"f":[],"id":"always-cooperate--gpt-mini--006","m":["A","A"],"p":["always-cooperate","gpt-mini"],"s":[3,3]},{"f":[],"id":"always-cooperate--gpt-mini--007","m":["AA","AB"],"p":["always-cooperate","gpt-mini"],"s":[3,8]},{"f":[],"id":"always-cooperate--gpt-mini--008","m":["AAAAAAAA","AAAAAAAB"],"p":["always-cooperate","gpt-mini"],"s":[21,26]},{"f":[],"id":"always-cooperate--gpt-mini--009","m":["A","A"],"p":["always-cooperate","gpt-mini"],"s":[3,3]},{"f":[],"id":"always-cooperate--grim-trigger--000","m":["AAAA","AAAA"],"p":["always-cooperate","grim-trigger"],"s":[12,12]},{"f":[],"id":"always-cooperate--grim-trigger--001","m":["AA","AA"],"p":["always-cooperate","grim-trigger"],"s":[6,6]},{"f":[],"id":"always-cooperate--grim-trigger--002","m":["AAAAAAAAAAAAAAAA","AAAAAAAAAAAAAAAA"],"p":["always-cooperate","grim-trigger"],"s":[48,48]},{"f":[],"id":"always-cooperate--grim-trigger--003","m":["AAAA","AAAA"],"p":["always-cooperate","grim-trigger"],"s":[12,12]},{"f":[],"id":"always-cooperate--grim-trigger--004","m":["AAAAAAAAAAAAAAAAAA","AAAAAAAAAAAAAAAAAA"],"p":["always-cooperate","grim-trigger"],"s":[54,54]},{"f":[],"id":"always-cooperate--grim-trigger--005","m":["AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA","AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"],"p":["always-cooperate","grim-trigger"],"s":[114,114]},{"f":[],"id":"always-cooperate--grim-trigger--006","m":["AA","AA"],"p":["always-cooperate","grim-trigger"],"s":[6,6]},{"f":[],"id":"always-cooperate--grim-trigger--007","m":["AAAAAAAAA","AAAAAAAAA"],"p":["always-cooperate","grim-trigger"],"s":[27,27]},{"f":[],"id":"always-cooperate--grim-trigger--008","m":["AAAAAAA","AAAAAAA"],"p":["always-cooperate","grim-trigger"],"s":[21,21]},{"f":[],"id":"always-cooperate--grim-trigger--009","m":["AAAA","AAAA"],"p":["always-cooperate","grim-trigger"],"s":[12,12]},{"f":[],"id":"always-cooperate--haiku--000","m":["AAAAAAAA","AAAAAAAA"],"p":["always-cooperate","haiku"],"s":[24,24]},{"f":[],"id":"always-cooperate--haiku--001","m":["A","A"],"p":["always-cooperate","haiku"],"s":[3,3]},{"f":[],"id":"always-cooperate--haiku--002","m":["AAAAAAAAAA","AAAAAAAAAA"],"p":["always-cooperate","haiku"],"s":[30,30]},{"f":[],"id":"always-cooperate--haiku--003","m":["AAAAAAAAAA","AAAAAAAAAA"],"p":["always-cooperate","haiku"],"s":[30,30]},{"f":[],"id":"always-cooperate--haiku--004","m":["AAA","AAA"],"p":["always-cooperate","haiku"],"s":[9,9]},{"f":[],"id":"always-cooperate--haiku--005","m":["AAAAA","AAAAA"],"p":["always-cooperate","haiku"],"s":[15,15]},{"f":[],"id":"always-cooperate--haiku--006","m":["AAAAAA","AAAAAA"],"p":["always-cooperate","haiku"],"s":[18,18]},{"f":[],"id":"always-cooperate--haiku--007","m":["AAAAA","AAAAA"],"p":["always-cooperate","haiku"],"s":[15,15]},{"f":[],"id":"always-cooperate--haiku--008","m":["AAAAAAAAAAAAAAAAA","AAAAAAAAAAAAAAAAA"],"p":["always-cooperate","haiku"],"s":[51,51]},{"f":[],"id":"always-cooperate--haiku--009","m":["AAAAAAAAAAAAA","AAAAAAAAAAAAA"],"p":["always-cooperate","haiku"],"s":[39,39]},{"f":[],"id":"always-cooperate--random--000","m":["AAAAAAAAAAA","BABAAAABBAB"],"p":["always-cooperate","random"],"s":[18,43]},{"f":[],"id":"always-cooperate--random--001","m":["AAAAAAAAAA","ABABABABAB"],"p":["always-cooperate","random"],"s":[15,40]},{"f":[],"id":"always-cooperate--random--002","m":["AAAAAAAAAAAAAAAAAAAA","AAAABAABABABBBAAABBB"],"p":["always-cooperate","random"],"s":[33,78]},{"f":[],"id":"always-cooperate--random--003","m":["AAAAAAAAAA","AABABABBBB"],"p":["always-cooperate","random"],"s":[12,42]},{"f":[],"id":"always-cooperate--random--004","m":["AAAAAAAAAAA","ABBABABAABB"],"p":["always-cooperate","random"],"s":[15,45]},{"f":[],"id":"always-cooperate--random--005","m":["AAAAAAAAAAA","BBABBBBBBBA"],"p":["always-cooperate","random"],"s":[6,51]},{"f":[],"id":"always-cooperate--random--006","m":["AAA","ABA"],"p":["always-cooperate","random"],"s":[6,11]},{"f":[],"id":"always-cooperate--random--007","m":["AAAA","BAAB"],"p":["always-cooperate","random"],"s":[6,16]},{"f":[],"id":"always-cooperate--random--008","m":["AAAAAAAAA","BABBBBAAB"],"p":["always-cooperate","random"],"s":[9,39]},{"f":[],"id":"always-cooperate--random--009","m":["AAAAAAAAAAAAAAAAAAAAAAAA","BAAAABBAABAAABBBABAABABB"],"p":["always-cooperate","random"],"s":[39,94]},{"f":[],"id":"always-cooperate--tit-for-tat--000","m":["AAAAAAAAA","AAAAAAAAA"],"p":["always-cooperate","tit-for-tat"],"s":[27,27]},{"f":[],"id":"always-cooperate--tit-for-tat--001","m":["AAAAAAAAAA","AAAAAAAAAA"],"p":["always-cooperate","tit-for-tat"],"s":[30,30]},{"f":[],"id":"always-cooperate--tit-for-tat--002","m":["AAAAAAAA","AAAAAAAA"],"p":["always-cooperate","tit-for-tat"],"s":[24,24]},{"f":[],"id":"always-cooperate--tit-for-tat--003","m":["AAAAAAAAAAAAA","AAAAAAAAAAAAA"],"p":["always-cooperate","tit-for-tat"],"s":[39,39]},{"f":[],"id":"always-cooperate--tit-for-tat--004","m":["AAAAAAAAAAAAAAAAAAAA","AAAAAAAAAAAAAAAAAAAA"],"p":["always-cooperate","tit-for-tat"],"s":[60,60]},{"f":[],"id":"always-cooperate--tit-for-tat--005","m":["AAAAAAAAAAA","AAAAAAAAAAA"],"p":["always-cooperate","tit-for-tat"],"s":[33,33]},{"f":[],"id":"always-cooperate--tit-for-tat--006","m":["AAAAAAAAAAAAAAAAAAAAAAAAAA","AAAAAAAAAAAAAAAAAAAAAAAAAA"],"p":["always-cooperate","tit-for-tat"],"s":[78,78]},{"f":[],"id":"always-cooperate--tit-for-tat--007","m":["AAA","AAA"],"p":["always-cooperate","tit-for-tat"],"s":[9,9]},{"f":[],"id":"always-cooperate--tit-for-tat--008","m":["AAAAAAAAAAAAAAAAAAAAAAAA","AAAAAAAAAAAAAAAAAAAAAAAA"],"p":["always-cooperate","tit-for-tat"],"s":[72,72]},{"f":[],"id":"always-cooperate--tit-for-tat--009","m":["AAA","AAA"],"p":["always-cooperate","tit-for-tat"],"s":[9,9]},{"f":[],"id":"always-defect--deepseek-flash--000","m":["B","A"],"p":["always-defect","deepseek-flash"],"s":[5,0]},{"f":[],"id":"always-defect--deepseek-flash--001","m":["B","A"],"p":["always-defect","deepseek-flash"],"s":[5,0]},{"f":[],"id":"always-defect--deepseek-flash--002","m":["BBBBB","ABBBB"],"p":["always-defect","deepseek-flash"],"s":[9,4]},{"f":[[1,5,"retried,truncated"]],"id":"always-defect--deepseek-flash--003","m":["BBBBBBB","ABBBBBB"],"p":["always-defect","deepseek-flash"],"s":[11,6]},{"f":[[1,9,"retried,truncated"],[1,23,"retried,truncated"]],"id":"always-defect--deepseek-flash--004","m":["BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB","ABBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB"],"p":["always-defect","deepseek-flash"],"s":[54,49]},{"f":[],"id":"always-defect--deepseek-flash--005","m":["BB","AB"],"p":["always-defect","deepseek-flash"],"s":[6,1]},{"f":[],"id":"always-defect--deepseek-flash--006","m":["BBBBBBBBBBBBB","ABBBBBBBBBBBB"],"p":["always-defect","deepseek-flash"],"s":[17,12]},{"f":[],"id":"always-defect--deepseek-flash--007","m":["BBB","ABB"],"p":["always-defect","deepseek-flash"],"s":[7,2]},{"f":[[1,6,"retried,truncated"],[1,15,"retried,truncated"]],"id":"always-defect--deepseek-flash--008","m":["BBBBBBBBBBBBBBBBBBBBBBBBBBBBBB","ABBBBBBBBBBBBBBBBBBBBBBBBBBBBB"],"p":["always-defect","deepseek-flash"],"s":[34,29]},{"f":[],"id":"always-defect--deepseek-flash--009","m":["BB","AB"],"p":["always-defect","deepseek-flash"],"s":[6,1]},{"f":[],"id":"always-defect--gemini-flash--000","m":["BBBBBBBB","BBBBBBBB"],"p":["always-defect","gemini-flash"],"s":[8,8]},{"f":[],"id":"always-defect--gemini-flash--001","m":["BB","BB"],"p":["always-defect","gemini-flash"],"s":[2,2]},{"f":[],"id":"always-defect--gemini-flash--002","m":["B","A"],"p":["always-defect","gemini-flash"],"s":[5,0]},{"f":[],"id":"always-defect--gemini-flash--003","m":["BBBBBBBBBBBBBBBB","ABBBBBBBBBBBBBBB"],"p":["always-defect","gemini-flash"],"s":[20,15]},{"f":[],"id":"always-defect--gemini-flash--004","m":["BBBBBBBBBBBBBBBBB","BABBBBBBBBBBBBBBB"],"p":["always-defect","gemini-flash"],"s":[21,16]},{"f":[],"id":"always-defect--gemini-flash--005","m":["BBBBBBBBBBBBBBBBBBBBBBBB","ABBBBBBBBBBBBBBBBBBBBBBB"],"p":["always-defect","gemini-flash"],"s":[28,23]},{"f":[],"id":"always-defect--gemini-flash--006","m":["BBBBBBBBBBB","BBBBBBBBBBB"],"p":["always-defect","gemini-flash"],"s":[11,11]},{"f":[],"id":"always-defect--gemini-flash--007","m":["BBBBBBBBBBBBBBBB","ABBBBBBBBBBBBBBB"],"p":["always-defect","gemini-flash"],"s":[20,15]},{"f":[],"id":"always-defect--gemini-flash--008","m":["BBBBBBBB","ABBBBBBB"],"p":["always-defect","gemini-flash"],"s":[12,7]},{"f":[],"id":"always-defect--gemini-flash--009","m":["BBBBBB","ABBBBB"],"p":["always-defect","gemini-flash"],"s":[10,5]},{"f":[],"id":"always-defect--gpt-mini--000","m":["BBBBBBBB","BBABBBBB"],"p":["always-defect","gpt-mini"],"s":[12,7]},{"f":[],"id":"always-defect--gpt-mini--001","m":["BBBBBBBBBBBBBBBBB","ABBBBBBBBBBBBBBBB"],"p":["always-defect","gpt-mini"],"s":[21,16]},{"f":[],"id":"always-defect--gpt-mini--002","m":["BBBBBBBBBBBBBBBB","BBBBBBBBBBBBBBBB"],"p":["always-defect","gpt-mini"],"s":[16,16]},{"f":[],"id":"always-defect--gpt-mini--003","m":["BBBBBBBBBBBBBBBBBBBBBBB","ABBBBBBBBBBBBBBBBBBBBBB"],"p":["always-defect","gpt-mini"],"s":[27,22]},{"f":[],"id":"always-defect--gpt-mini--004","m":["BBBBBBBBBBBBBBBBBBBBBBBB","BBBBBBBABBBBBBBBBBBBBBBB"],"p":["always-defect","gpt-mini"],"s":[28,23]},{"f":[],"id":"always-defect--gpt-mini--005","m":["BBB","ABB"],"p":["always-defect","gpt-mini"],"s":[7,2]},{"f":[],"id":"always-defect--gpt-mini--006","m":["BBBBBBBBBB","ABBBBBBBBB"],"p":["always-defect","gpt-mini"],"s":[14,9]},{"f":[],"id":"always-defect--gpt-mini--007","m":["BBBBBBBBBBBBB","ABBBBBBBBBBBB"],"p":["always-defect","gpt-mini"],"s":[17,12]},{"f":[],"id":"always-defect--gpt-mini--008","m":["B","A"],"p":["always-defect","gpt-mini"],"s":[5,0]},{"f":[],"id":"always-defect--gpt-mini--009","m":["BBBBBBBBBBBBBBBBBBBB","BBABBBBBBBBBBBBBBBBB"],"p":["always-defect","gpt-mini"],"s":[24,19]},{"f":[],"id":"always-defect--grim-trigger--000","m":["B","A"],"p":["always-defect","grim-trigger"],"s":[5,0]},{"f":[],"id":"always-defect--grim-trigger--001","m":["BBBBBBBBBB","ABBBBBBBBB"],"p":["always-defect","grim-trigger"],"s":[14,9]},{"f":[],"id":"always-defect--grim-trigger--002","m":["BBBBBB","ABBBBB"],"p":["always-defect","grim-trigger"],"s":[10,5]},{"f":[],"id":"always-defect--grim-trigger--003","m":["BBBBBBBBBBBBBBBBB","ABBBBBBBBBBBBBBBB"],"p":["always-defect","grim-trigger"],"s":[21,16]},{"f":[],"id":"always-defect--grim-trigger--004","m":["BBBBBBBBBBBBBBBBBBB","ABBBBBBBBBBBBBBBBBB"],"p":["always-defect","grim-trigger"],"s":[23,18]},{"f":[],"id":"always-defect--grim-trigger--005","m":["BBBBBBBBBBBBBBB","ABBBBBBBBBBBBBB"],"p":["always-defect","grim-trigger"],"s":[19,14]},{"f":[],"id":"always-defect--grim-trigger--006","m":["BBBBBBBBB","ABBBBBBBB"],"p":["always-defect","grim-trigger"],"s":[13,8]},{"f":[],"id":"always-defect--grim-trigger--007","m":["BBBBBBBB","ABBBBBBB"],"p":["always-defect","grim-trigger"],"s":[12,7]},{"f":[],"id":"always-defect--grim-trigger--008","m":["BBBBBBBBB","ABBBBBBBB"],"p":["always-defect","grim-trigger"],"s":[13,8]},{"f":[],"id":"always-defect--grim-trigger--009","m":["BBB","ABB"],"p":["always-defect","grim-trigger"],"s":[7,2]},{"f":[],"id":"always-defect--haiku--000","m":["BBBBBBBBBBBBB","ABBBBBBBBBBBB"],"p":["always-defect","haiku"],"s":[17,12]},{"f":[],"id":"always-defect--haiku--001","m":["BBBBBBBBBBBBBBBBBB","ABBBBBBBBBBBBBBBBB"],"p":["always-defect","haiku"],"s":[22,17]},{"f":[],"id":"always-defect--haiku--002","m":["BBB","ABB"],"p":["always-defect","haiku"],"s":[7,2]},{"f":[],"id":"always-defect--haiku--003","m":["BBBBBBBBB","ABBBBBBBB"],"p":["always-defect","haiku"],"s":[13,8]},{"f":[],"id":"always-defect--haiku--004","m":["BBBBBBBBBBBBBBBBBBB","ABBBBBBBBBBBBBBBBBB"],"p":["always-defect","haiku"],"s":[23,18]},{"f":[],"id":"always-defect--haiku--005","m":["BBBBBBBBBBBBBBB","ABBBBBBBBBBBBBB"],"p":["always-defect","haiku"],"s":[19,14]},{"f":[],"id":"always-defect--haiku--006","m":["BBBB","ABBB"],"p":["always-defect","haiku"],"s":[8,3]},{"f":[],"id":"always-defect--haiku--007","m":["BB","AB"],"p":["always-defect","haiku"],"s":[6,1]},{"f":[],"id":"always-defect--haiku--008","m":["BBBBBBBB","ABBBBBBB"],"p":["always-defect","haiku"],"s":[12,7]},{"f":[],"id":"always-defect--haiku--009","m":["BBBBBBBBB","ABBBBBBBB"],"p":["always-defect","haiku"],"s":[13,8]},{"f":[],"id":"always-defect--random--000","m":["BBBBBBBB","BBBBABBB"],"p":["always-defect","random"],"s":[12,7]},{"f":[],"id":"always-defect--random--001","m":["BBBBBBB","AAABAAB"],"p":["always-defect","random"],"s":[27,2]},{"f":[],"id":"always-defect--random--002","m":["BBBBBBBBBBB","AAAAAABAAAA"],"p":["always-defect","random"],"s":[51,1]},{"f":[],"id":"always-defect--random--003","m":["BBBBBBBBBBBBBBBBBBBBBBBBBBBB","BAAAABAABBAABABAAABBAABBBBAA"],"p":["always-defect","random"],"s":[92,12]},{"f":[],"id":"always-defect--random--004","m":["BBBBBBBBBBBBBBBB","BBBBBBBBBAAABABB"],"p":["always-defect","random"],"s":[32,12]},{"f":[],"id":"always-defect--random--005","m":["BBBBBBB","ABBABAB"],"p":["always-defect","random"],"s":[19,4]},{"f":[],"id":"always-defect--random--006","m":["BBBBBBBBBBB","AABBABAAAAA"],"p":["always-defect","random"],"s":[43,3]},{"f":[],"id":"always-defect--random--007","m":["BBBBBBB","BBBABBB"],"p":["always-defect","random"],"s":[11,6]},{"f":[],"id":"always-defect--random--008","m":["BBB","ABB"],"p":["always-defect","random"],"s":[7,2]},{"f":[],"id":"always-defect--random--009","m":["BBBBB","BABBA"],"p":["always-defect","random"],"s":[13,3]},{"f":[],"id":"always-defect--tit-for-tat--000","m":["BBBBBBBBBBBBBBBBBBBBBBBBBB","ABBBBBBBBBBBBBBBBBBBBBBBBB"],"p":["always-defect","tit-for-tat"],"s":[30,25]},{"f":[],"id":"always-defect--tit-for-tat--001","m":["BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB","ABBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB"],"p":["always-defect","tit-for-tat"],"s":[49,44]},{"f":[],"id":"always-defect--tit-for-tat--002","m":["BBB","ABB"],"p":["always-defect","tit-for-tat"],"s":[7,2]},{"f":[],"id":"always-defect--tit-for-tat--003","m":["BBB","ABB"],"p":["always-defect","tit-for-tat"],"s":[7,2]},{"f":[],"id":"always-defect--tit-for-tat--004","m":["BB","AB"],"p":["always-defect","tit-for-tat"],"s":[6,1]},{"f":[],"id":"always-defect--tit-for-tat--005","m":["BBBB","ABBB"],"p":["always-defect","tit-for-tat"],"s":[8,3]},{"f":[],"id":"always-defect--tit-for-tat--006","m":["BBBBBBBBBBBBB","ABBBBBBBBBBBB"],"p":["always-defect","tit-for-tat"],"s":[17,12]},{"f":[],"id":"always-defect--tit-for-tat--007","m":["BB","AB"],"p":["always-defect","tit-for-tat"],"s":[6,1]},{"f":[],"id":"always-defect--tit-for-tat--008","m":["BBBBBBBBBB","ABBBBBBBBB"],"p":["always-defect","tit-for-tat"],"s":[14,9]},{"f":[],"id":"always-defect--tit-for-tat--009","m":["BBBBBBBB","ABBBBBBB"],"p":["always-defect","tit-for-tat"],"s":[12,7]},{"f":[],"id":"deepseek-flash--deepseek-flash--000","m":["AAAA","AAAA"],"p":["deepseek-flash","deepseek-flash"],"s":[12,12]},{"f":[],"id":"deepseek-flash--deepseek-flash--001","m":["AAAAAAA","AAAAAAA"],"p":["deepseek-flash","deepseek-flash"],"s":[21,21]},{"f":[],"id":"deepseek-flash--deepseek-flash--002","m":["AAAAA","AAAAA"],"p":["deepseek-flash","deepseek-flash"],"s":[15,15]},{"f":[],"id":"deepseek-flash--deepseek-flash--003","m":["AAA","AAA"],"p":["deepseek-flash","deepseek-flash"],"s":[9,9]},{"f":[],"id":"deepseek-flash--deepseek-flash--004","m":["AAAAAAAAAAAAAAAAA","AAAAAAAAAAAAAAAAA"],"p":["deepseek-flash","deepseek-flash"],"s":[51,51]},{"f":[],"id":"deepseek-flash--deepseek-flash--005","m":["AAAAA","AAAAA"],"p":["deepseek-flash","deepseek-flash"],"s":[15,15]},{"f":[],"id":"deepseek-flash--deepseek-flash--006","m":["AAAAAAAAAAA","AAAAAAAAAAA"],"p":["deepseek-flash","deepseek-flash"],"s":[33,33]},{"f":[[1,11,"retried,truncated"]],"id":"deepseek-flash--deepseek-flash--007","m":["AAAAAAAAAAAAAAAA","AAAAAAAAAAAAAAAA"],"p":["deepseek-flash","deepseek-flash"],"s":[48,48]},{"f":[],"id":"deepseek-flash--deepseek-flash--008","m":["A","A"],"p":["deepseek-flash","deepseek-flash"],"s":[3,3]},{"f":[],"id":"deepseek-flash--deepseek-flash--009","m":["AAA","AAA"],"p":["deepseek-flash","deepseek-flash"],"s":[9,9]},{"f":[],"id":"gemini-flash--deepseek-flash--000","m":["AAAAAA","AAAAAA"],"p":["gemini-flash","deepseek-flash"],"s":[18,18]},{"f":[],"id":"gemini-flash--deepseek-flash--001","m":["BBBB","ABBB"],"p":["gemini-flash","deepseek-flash"],"s":[8,3]},{"f":[],"id":"gemini-flash--deepseek-flash--002","m":["AA","AA"],"p":["gemini-flash","deepseek-flash"],"s":[6,6]},{"f":[],"id":"gemini-flash--deepseek-flash--003","m":["AAAAAAAAAAA","AAAAAAAAAAA"],"p":["gemini-flash","deepseek-flash"],"s":[33,33]},{"f":[],"id":"gemini-flash--deepseek-flash--004","m":["AAA","AAA"],"p":["gemini-flash","deepseek-flash"],"s":[9,9]},{"f":[],"id":"gemini-flash--deepseek-flash--005","m":["AA","AA"],"p":["gemini-flash","deepseek-flash"],"s":[6,6]},{"f":[],"id":"gemini-flash--deepseek-flash--006","m":["BAAA","ABAA"],"p":["gemini-flash","deepseek-flash"],"s":[11,11]},{"f":[[1,4,"retried,truncated"]],"id":"gemini-flash--deepseek-flash--007","m":["BAAAAA","ABAAAA"],"p":["gemini-flash","deepseek-flash"],"s":[17,17]},{"f":[],"id":"gemini-flash--deepseek-flash--008","m":["AA","AA"],"p":["gemini-flash","deepseek-flash"],"s":[6,6]},{"f":[],"id":"gemini-flash--deepseek-flash--009","m":["A","A"],"p":["gemini-flash","deepseek-flash"],"s":[3,3]},{"f":[],"id":"gemini-flash--gemini-flash--000","m":["ABBBB","BBBAB"],"p":["gemini-flash","gemini-flash"],"s":[8,8]},{"f":[],"id":"gemini-flash--gemini-flash--001","m":["ABBB","BABA"],"p":["gemini-flash","gemini-flash"],"s":[11,6]},{"f":[],"id":"gemini-flash--gemini-flash--002","m":["AAAA","AAAA"],"p":["gemini-flash","gemini-flash"],"s":[12,12]},{"f":[],"id":"gemini-flash--gemini-flash--003","m":["A","A"],"p":["gemini-flash","gemini-flash"],"s":[3,3]},{"f":[],"id":"gemini-flash--gemini-flash--004","m":["AAAAAAA","AAAAAAA"],"p":["gemini-flash","gemini-flash"],"s":[21,21]},{"f":[],"id":"gemini-flash--gemini-flash--005","m":["AAAAAAAAAAAA","AAAAAAAAAAAA"],"p":["gemini-flash","gemini-flash"],"s":[36,36]},{"f":[],"id":"gemini-flash--gemini-flash--006","m":["BBBABBBBBB","ABBBBBBBBB"],"p":["gemini-flash","gemini-flash"],"s":[13,13]},{"f":[],"id":"gemini-flash--gemini-flash--007","m":["AAAAAAAAAAAAAA","AAAAAAAAAAAAAA"],"p":["gemini-flash","gemini-flash"],"s":[42,42]},{"f":[],"id":"gemini-flash--gemini-flash--008","m":["BABAB","ABBBB"],"p":["gemini-flash","gemini-flash"],"s":[7,12]},{"f":[],"id":"gemini-flash--gemini-flash--009","m":["B","B"],"p":["gemini-flash","gemini-flash"],"s":[1,1]},{"f":[],"id":"gpt-mini--deepseek-flash--000","m":["AAAAA","AAAAA"],"p":["gpt-mini","deepseek-flash"],"s":[15,15]},{"f":[],"id":"gpt-mini--deepseek-flash--001","m":["AAAAAAAAAA","AAAAAAAAAA"],"p":["gpt-mini","deepseek-flash"],"s":[30,30]},{"f":[],"id":"gpt-mini--deepseek-flash--002","m":["A","A"],"p":["gpt-mini","deepseek-flash"],"s":[3,3]},{"f":[],"id":"gpt-mini--deepseek-flash--003","m":["A","A"],"p":["gpt-mini","deepseek-flash"],"s":[3,3]},{"f":[],"id":"gpt-mini--deepseek-flash--004","m":["AAAAAAA","AAAAAAA"],"p":["gpt-mini","deepseek-flash"],"s":[21,21]},{"f":[],"id":"gpt-mini--deepseek-flash--005","m":["AAA","AAA"],"p":["gpt-mini","deepseek-flash"],"s":[9,9]},{"f":[],"id":"gpt-mini--deepseek-flash--006","m":["AAA","AAA"],"p":["gpt-mini","deepseek-flash"],"s":[9,9]},{"f":[],"id":"gpt-mini--deepseek-flash--007","m":["AAAAA","AAAAA"],"p":["gpt-mini","deepseek-flash"],"s":[15,15]},{"f":[],"id":"gpt-mini--deepseek-flash--008","m":["BABBBBBB","ABABBBBB"],"p":["gpt-mini","deepseek-flash"],"s":[15,10]},{"f":[],"id":"gpt-mini--deepseek-flash--009","m":["AAAAAAAAAAAAAAAAAAABAAAAAAAAAAAA","AAAAAAAAAAAAAAAAAAAABAAAAAAAAAAA"],"p":["gpt-mini","deepseek-flash"],"s":[95,95]},{"f":[],"id":"gpt-mini--gemini-flash--000","m":["ABBBBBBBBBBBBBBBB","BBBBBBBBBBBBBBBBB"],"p":["gpt-mini","gemini-flash"],"s":[16,21]},{"f":[],"id":"gpt-mini--gemini-flash--001","m":["ABA","BAA"],"p":["gpt-mini","gemini-flash"],"s":[8,8]},{"f":[],"id":"gpt-mini--gemini-flash--002","m":["ABBBBBB","BBBBBBB"],"p":["gpt-mini","gemini-flash"],"s":[6,11]},{"f":[],"id":"gpt-mini--gemini-flash--003","m":["AA","AA"],"p":["gpt-mini","gemini-flash"],"s":[6,6]},{"f":[],"id":"gpt-mini--gemini-flash--004","m":["AAAA","AAAA"],"p":["gpt-mini","gemini-flash"],"s":[12,12]},{"f":[],"id":"gpt-mini--gemini-flash--005","m":["ABB","BBB"],"p":["gpt-mini","gemini-flash"],"s":[2,7]},{"f":[],"id":"gpt-mini--gemini-flash--006","m":["AAAAAAAAAAAAAAAAA","AAAAAAAAAAAAAAAAA"],"p":["gpt-mini","gemini-flash"],"s":[51,51]},{"f":[],"id":"gpt-mini--gemini-flash--007","m":["B","B"],"p":["gpt-mini","gemini-flash"],"s":[1,1]},{"f":[],"id":"gpt-mini--gemini-flash--008","m":["AA","AA"],"p":["gpt-mini","gemini-flash"],"s":[6,6]},{"f":[],"id":"gpt-mini--gemini-flash--009","m":["B","B"],"p":["gpt-mini","gemini-flash"],"s":[1,1]},{"f":[],"id":"gpt-mini--gpt-mini--000","m":["AAAAAAAAAAAAAAAAAAAAAAAAA","AAAAAAAAAAAAAAAAAAAAAAAAA"],"p":["gpt-mini","gpt-mini"],"s":[75,75]},{"f":[],"id":"gpt-mini--gpt-mini--001","m":["AAAAAA","AAAAAA"],"p":["gpt-mini","gpt-mini"],"s":[18,18]},{"f":[],"id":"gpt-mini--gpt-mini--002","m":["BBB","ABB"],"p":["gpt-mini","gpt-mini"],"s":[7,2]},{"f":[],"id":"gpt-mini--gpt-mini--003","m":["AAAAAA","AAAAAA"],"p":["gpt-mini","gpt-mini"],"s":[18,18]},{"f":[],"id":"gpt-mini--gpt-mini--004","m":["AAAAAAAAAAAAAAAAAA","AAAAAAAAAAAAAAAAAA"],"p":["gpt-mini","gpt-mini"],"s":[54,54]},{"f":[],"id":"gpt-mini--gpt-mini--005","m":["AAAAAAA","AAAAAAA"],"p":["gpt-mini","gpt-mini"],"s":[21,21]},{"f":[],"id":"gpt-mini--gpt-mini--006","m":["ABBBB","BBBAB"],"p":["gpt-mini","gpt-mini"],"s":[8,8]},{"f":[],"id":"gpt-mini--gpt-mini--007","m":["AAAAA","AAAAA"],"p":["gpt-mini","gpt-mini"],"s":[15,15]},{"f":[],"id":"gpt-mini--gpt-mini--008","m":["AAAAAAAAAAAAAAAAAAAAAAAAAAA","AAAAAAAAAAAAAAAAAAAAAAAAAAA"],"p":["gpt-mini","gpt-mini"],"s":[81,81]},{"f":[],"id":"gpt-mini--gpt-mini--009","m":["AAAAAABAAAAB","AAAAABAAAABA"],"p":["gpt-mini","gpt-mini"],"s":[34,34]},{"f":[],"id":"grim-trigger--deepseek-flash--000","m":["A","A"],"p":["grim-trigger","deepseek-flash"],"s":[3,3]},{"f":[],"id":"grim-trigger--deepseek-flash--001","m":["AAAAAAAAAAA","AAAAAAAAAAA"],"p":["grim-trigger","deepseek-flash"],"s":[33,33]},{"f":[],"id":"grim-trigger--deepseek-flash--002","m":["AAAA","AAAA"],"p":["grim-trigger","deepseek-flash"],"s":[12,12]},{"f":[],"id":"grim-trigger--deepseek-flash--003","m":["AAA","AAA"],"p":["grim-trigger","deepseek-flash"],"s":[9,9]},{"f":[],"id":"grim-trigger--deepseek-flash--004","m":["AAA","AAA"],"p":["grim-trigger","deepseek-flash"],"s":[9,9]},{"f":[],"id":"grim-trigger--deepseek-flash--005","m":["AAAAAAAAAAAAAAAAAAAA","AAAAAAAAAAAAAAAAAAAA"],"p":["grim-trigger","deepseek-flash"],"s":[60,60]},{"f":[],"id":"grim-trigger--deepseek-flash--006","m":["A","A"],"p":["grim-trigger","deepseek-flash"],"s":[3,3]},{"f":[],"id":"grim-trigger--deepseek-flash--007","m":["AAAA","AAAA"],"p":["grim-trigger","deepseek-flash"],"s":[12,12]},{"f":[],"id":"grim-trigger--deepseek-flash--008","m":["AAAAA","AAAAA"],"p":["grim-trigger","deepseek-flash"],"s":[15,15]},{"f":[[1,3,"retried,truncated"]],"id":"grim-trigger--deepseek-flash--009","m":["AAAAA","AAAAA"],"p":["grim-trigger","deepseek-flash"],"s":[15,15]},{"f":[],"id":"grim-trigger--gemini-flash--000","m":["ABBBBBBBBBBBBBBBBBBBBBBBBBBB","BAABBBBBBBBBBBBBBBBBBBBBBBBB"],"p":["grim-trigger","gemini-flash"],"s":[35,30]},{"f":[],"id":"grim-trigger--gemini-flash--001","m":["ABBBBBB","BABBABB"],"p":["grim-trigger","gemini-flash"],"s":[14,9]},{"f":[],"id":"grim-trigger--gemini-flash--002","m":["AAAA","AAAA"],"p":["grim-trigger","gemini-flash"],"s":[12,12]},{"f":[],"id":"grim-trigger--gemini-flash--003","m":["ABBBBBBBBBBBBBB","BBBABBBBBBBBBBB"],"p":["grim-trigger","gemini-flash"],"s":[18,18]},{"f":[],"id":"grim-trigger--gemini-flash--004","m":["AAAAAAAAAAAAAAAAAAAAAAA","AAAAAAAAAAAAAAAAAAAAAAA"],"p":["grim-trigger","gemini-flash"],"s":[69,69]},{"f":[],"id":"grim-trigger--gemini-flash--005","m":["AAAAAAAAAAAAAA","AAAAAAAAAAAAAA"],"p":["grim-trigger","gemini-flash"],"s":[42,42]},{"f":[],"id":"grim-trigger--gemini-flash--006","m":["A","A"],"p":["grim-trigger","gemini-flash"],"s":[3,3]},{"f":[],"id":"grim-trigger--gemini-flash--007","m":["ABBBBBBBBBBB","BAABBBBBBBBB"],"p":["grim-trigger","gemini-flash"],"s":[19,14]},{"f":[],"id":"grim-trigger--gemini-flash--008","m":["ABBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB","BBABBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB"],"p":["grim-trigger","gemini-flash"],"s":[40,40]},{"f":[],"id":"grim-trigger--gemini-flash--009","m":["AAAAAAAAAAAAAAAAAAAAAAA","AAAAAAAAAAAAAAAAAAAAAAA"],"p":["grim-trigger","gemini-flash"],"s":[69,69]},{"f":[],"id":"grim-trigger--gpt-mini--000","m":["AAAAAA","AAAAAA"],"p":["grim-trigger","gpt-mini"],"s":[18,18]},{"f":[],"id":"grim-trigger--gpt-mini--001","m":["AAAAAAAAAAAAAAAAA","AAAAAAAAAAAAAAAAA"],"p":["grim-trigger","gpt-mini"],"s":[51,51]},{"f":[],"id":"grim-trigger--gpt-mini--002","m":["AAAA","AAAA"],"p":["grim-trigger","gpt-mini"],"s":[12,12]},{"f":[],"id":"grim-trigger--gpt-mini--003","m":["ABBBBBBBBBBBB","BAABBBBBBBBBB"],"p":["grim-trigger","gpt-mini"],"s":[20,15]},{"f":[],"id":"grim-trigger--gpt-mini--004","m":["AAAAAAAAAA","AAAAAAAAAA"],"p":["grim-trigger","gpt-mini"],"s":[30,30]},{"f":[],"id":"grim-trigger--gpt-mini--005","m":["AA","AA"],"p":["grim-trigger","gpt-mini"],"s":[6,6]},{"f":[],"id":"grim-trigger--gpt-mini--006","m":["AAAAAA","AAAAAA"],"p":["grim-trigger","gpt-mini"],"s":[18,18]},{"f":[],"id":"grim-trigger--gpt-mini--007","m":["AAAAAA","AAAAAA"],"p":["grim-trigger","gpt-mini"],"s":[18,18]},{"f":[],"id":"grim-trigger--gpt-mini--008","m":["AAAAAAABBBBB","AAAAAABAABAB"],"p":["grim-trigger","gpt-mini"],"s":[35,25]},{"f":[],"id":"grim-trigger--gpt-mini--009","m":["AAAAAAA","AAAAAAA"],"p":["grim-trigger","gpt-mini"],"s":[21,21]},{"f":[],"id":"grim-trigger--haiku--000","m":["AAAAAAA","AAAAAAA"],"p":["grim-trigger","haiku"],"s":[21,21]},{"f":[],"id":"grim-trigger--haiku--001","m":["AAAAAAAAAAAAAAAAAAAA","AAAAAAAAAAAAAAAAAAAA"],"p":["grim-trigger","haiku"],"s":[60,60]},{"f":[],"id":"grim-trigger--haiku--002","m":["AAAA","AAAA"],"p":["grim-trigger","haiku"],"s":[12,12]},{"f":[],"id":"grim-trigger--haiku--003","m":["AAAAAAA","AAAAAAA"],"p":["grim-trigger","haiku"],"s":[21,21]},{"f":[],"id":"grim-trigger--haiku--004","m":["AAAAAAAAA","AAAAAAAAA"],"p":["grim-trigger","haiku"],"s":[27,27]},{"f":[],"id":"grim-trigger--haiku--005","m":["AAAAAAAAAA","AAAAAAAAAA"],"p":["grim-trigger","haiku"],"s":[30,30]},{"f":[],"id":"grim-trigger--haiku--006","m":["AAAA","AAAA"],"p":["grim-trigger","haiku"],"s":[12,12]},{"f":[],"id":"grim-trigger--haiku--007","m":["AAAA","AAAA"],"p":["grim-trigger","haiku"],"s":[12,12]},{"f":[],"id":"grim-trigger--haiku--008","m":["AAAAAAAA","AAAAAAAA"],"p":["grim-trigger","haiku"],"s":[24,24]},{"f":[],"id":"grim-trigger--haiku--009","m":["AAAAAAAAAAAAAAAAAAAAAAA","AAAAAAAAAAAAAAAAAAAAAAA"],"p":["grim-trigger","haiku"],"s":[69,69]},{"f":[],"id":"grim-trigger--random--000","m":["A","A"],"p":["grim-trigger","random"],"s":[3,3]},{"f":[],"id":"grim-trigger--random--001","m":["AABBBBBBBBBBBBBBBBBBBBBB","ABBAABABBAAABBBBBBBBBAAA"],"p":["grim-trigger","random"],"s":[61,21]},{"f":[],"id":"grim-trigger--random--002","m":["AAAAB","AAABB"],"p":["grim-trigger","random"],"s":[10,15]},{"f":[],"id":"grim-trigger--random--003","m":["AAABB","AABBB"],"p":["grim-trigger","random"],"s":[8,13]},{"f":[],"id":"grim-trigger--random--004","m":["ABBBBBBBBBBBBBBBBBBBBBBBBBBB","BAAAAABBBABBBBBABBBBBBABBAAB"],"p":["grim-trigger","random"],"s":[67,22]},{"f":[],"id":"grim-trigger--random--005","m":["AABBBBBBB","ABBAAABAB"],"p":["grim-trigger","random"],"s":[26,11]},{"f":[],"id":"grim-trigger--random--006","m":["ABBBBBBB","BBBABBAA"],"p":["grim-trigger","random"],"s":[19,9]},{"f":[],"id":"grim-trigger--random--007","m":["AABB","ABAB"],"p":["grim-trigger","random"],"s":[9,9]},{"f":[],"id":"grim-trigger--random--008","m":["AB","BB"],"p":["grim-trigger","random"],"s":[1,6]},{"f":[],"id":"grim-trigger--random--009","m":["ABBBBBB","BABBBAB"],"p":["grim-trigger","random"],"s":[14,9]},{"f":[],"id":"haiku--deepseek-flash--000","m":["AAAAAAAA","AAAAAAAA"],"p":["haiku","deepseek-flash"],"s":[24,24]},{"f":[],"id":"haiku--deepseek-flash--001","m":["AAA","AAA"],"p":["haiku","deepseek-flash"],"s":[9,9]},{"f":[],"id":"haiku--deepseek-flash--002","m":["AA","AA"],"p":["haiku","deepseek-flash"],"s":[6,6]},{"f":[],"id":"haiku--deepseek-flash--003","m":["AAAAAAAAAAAAA","AAAAAAAAAAAAA"],"p":["haiku","deepseek-flash"],"s":[39,39]},{"f":[],"id":"haiku--deepseek-flash--004","m":["A","A"],"p":["haiku","deepseek-flash"],"s":[3,3]},{"f":[],"id":"haiku--deepseek-flash--005","m":["AAAAAAAAAAAAAAAAAAAAAAAA","AAAAAAAAAAAAAAAAAAAAAAAA"],"p":["haiku","deepseek-flash"],"s":[72,72]},{"f":[],"id":"haiku--deepseek-flash--006","m":["A","A"],"p":["haiku","deepseek-flash"],"s":[3,3]},{"f":[],"id":"haiku--deepseek-flash--007","m":["AAAAAAAAAAAAAAA","AAAAAAAAAAAAAAA"],"p":["haiku","deepseek-flash"],"s":[45,45]},{"f":[],"id":"haiku--deepseek-flash--008","m":["AAAAAAAAAAAAAAAAAAAAAAAAAAAAA","AAAAAAAAAAAAAAAAAAAAAAAAAAAAA"],"p":["haiku","deepseek-flash"],"s":[87,87]},{"f":[],"id":"haiku--deepseek-flash--009","m":["AAAAA","AAAAA"],"p":["haiku","deepseek-flash"],"s":[15,15]},{"f":[],"id":"haiku--gemini-flash--000","m":["AAA","AAA"],"p":["haiku","gemini-flash"],"s":[9,9]},{"f":[],"id":"haiku--gemini-flash--001","m":["AAAAAAAAAA","AAAAAAAAAA"],"p":["haiku","gemini-flash"],"s":[30,30]},{"f":[],"id":"haiku--gemini-flash--002","m":["A","A"],"p":["haiku","gemini-flash"],"s":[3,3]},{"f":[],"id":"haiku--gemini-flash--003","m":["ABBBBBBBBBBBBBBBBB","BABBBBBBBBBBBBBBBB"],"p":["haiku","gemini-flash"],"s":[21,21]},{"f":[],"id":"haiku--gemini-flash--004","m":["ABBBBBBBB","BBABBBBBB"],"p":["haiku","gemini-flash"],"s":[12,12]},{"f":[],"id":"haiku--gemini-flash--005","m":["AA","AA"],"p":["haiku","gemini-flash"],"s":[6,6]},{"f":[],"id":"haiku--gemini-flash--006","m":["AAAAAAAAAA","AAAAAAAAAA"],"p":["haiku","gemini-flash"],"s":[30,30]},{"f":[],"id":"haiku--gemini-flash--007","m":["AAAAAAAAAAA","AAAAAAAAAAA"],"p":["haiku","gemini-flash"],"s":[33,33]},{"f":[],"id":"haiku--gemini-flash--008","m":["ABBBBBBBBBBB","BBBBBBBBBBBB"],"p":["haiku","gemini-flash"],"s":[11,16]},{"f":[],"id":"haiku--gemini-flash--009","m":["ABBBBBBBBBBBBBBB","BBBBBBBBBBBBBBBB"],"p":["haiku","gemini-flash"],"s":[15,20]},{"f":[],"id":"haiku--gpt-mini--000","m":["AAAAAA","AAAAAA"],"p":["haiku","gpt-mini"],"s":[18,18]},{"f":[],"id":"haiku--gpt-mini--001","m":["AAAAAAAAA","AAAAAAAAA"],"p":["haiku","gpt-mini"],"s":[27,27]},{"f":[],"id":"haiku--gpt-mini--002","m":["AAA","AAA"],"p":["haiku","gpt-mini"],"s":[9,9]},{"f":[],"id":"haiku--gpt-mini--003","m":["AAA","AAA"],"p":["haiku","gpt-mini"],"s":[9,9]},{"f":[],"id":"haiku--gpt-mini--004","m":["AAAAAAA","AAAAAAB"],"p":["haiku","gpt-mini"],"s":[18,23]},{"f":[],"id":"haiku--gpt-mini--005","m":["A","A"],"p":["haiku","gpt-mini"],"s":[3,3]},{"f":[],"id":"haiku--gpt-mini--006","m":["AAAAAAAAAAAAAAAA","AAAAAAAAAAAAAAAA"],"p":["haiku","gpt-mini"],"s":[48,48]},{"f":[],"id":"haiku--gpt-mini--007","m":["ABBBBBBBBBBBBBBB","BABABBBBBBBBBBBB"],"p":["haiku","gpt-mini"],"s":[23,18]},{"f":[],"id":"haiku--gpt-mini--008","m":["AAAAAAAAAAAAAAAAAAAAAAAAAAAAA","AAAAAAAAAAAAAAAAAAAAAAAAAAAAA"],"p":["haiku","gpt-mini"],"s":[87,87]},{"f":[],"id":"haiku--gpt-mini--009","m":["AA","AA"],"p":["haiku","gpt-mini"],"s":[6,6]},{"f":[],"id":"haiku--haiku--000","m":["AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA","AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"],"p":["haiku","haiku"],"s":[147,147]},{"f":[],"id":"haiku--haiku--001","m":["AAAAAAAAAAA","AAAAAAAAAAA"],"p":["haiku","haiku"],"s":[33,33]},{"f":[],"id":"haiku--haiku--002","m":["AAAAAAAAAAA","AAAAAAAAAAA"],"p":["haiku","haiku"],"s":[33,33]},{"f":[],"id":"haiku--haiku--003","m":["AAAAAAAAAAAAAAAAA","AAAAAAAAAAAAAAAAA"],"p":["haiku","haiku"],"s":[51,51]},{"f":[],"id":"haiku--haiku--004","m":["AAAAAAAAAAAAAAAAAAAAAAAAAAAAA","AAAAAAAAAAAAAAAAAAAAAAAAAAAAA"],"p":["haiku","haiku"],"s":[87,87]},{"f":[],"id":"haiku--haiku--005","m":["AAAAAAAAAAA","AAAAAAAAAAA"],"p":["haiku","haiku"],"s":[33,33]},{"f":[],"id":"haiku--haiku--006","m":["AAAAAAAAAAAAAAAAAAA","AAAAAAAAAAAAAAAAAAA"],"p":["haiku","haiku"],"s":[57,57]},{"f":[],"id":"haiku--haiku--007","m":["AAAAAAAA","AAAAAAAA"],"p":["haiku","haiku"],"s":[24,24]},{"f":[],"id":"haiku--haiku--008","m":["AAAAA","AAAAA"],"p":["haiku","haiku"],"s":[15,15]},{"f":[],"id":"haiku--haiku--009","m":["AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA","AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"],"p":["haiku","haiku"],"s":[93,93]},{"f":[],"id":"random--deepseek-flash--000","m":["AB","AA"],"p":["random","deepseek-flash"],"s":[8,3]},{"f":[[1,2,"retried,truncated"]],"id":"random--deepseek-flash--001","m":["BABB","ABBA"],"p":["random","deepseek-flash"],"s":[11,6]},{"f":[[1,4,"retried,truncated"]],"id":"random--deepseek-flash--002","m":["ABBBB","AABBB"],"p":["random","deepseek-flash"],"s":[11,6]},{"f":[[1,7,"forfeit,truncated"],[1,8,"forfeit,truncated"],[1,9,"forfeit,truncated"],[1,13,"retried,truncated"],[1,14,"retried,truncated"],[1,15,"forfeit,truncated"],[1,16,"retried,truncated"]],"id":"random--deepseek-flash--003","m":["BABBABABBABABAAAABAABBAAABAAAA","ABBBAABBBBBBBBBBBBBBBBBBBBBBBB"],"p":["random","deepseek-flash"],"s":[23,98]},{"f":[],"id":"random--deepseek-flash--004","m":["BBBABBAABBAAAABAABAAABBBAA","ABBBABBBBBBBBBBBBBBBBBBBBB"],"p":["random","deepseek-flash"],"s":[20,80]},{"f":[],"id":"random--deepseek-flash--005","m":["ABA","AAB"],"p":["random","deepseek-flash"],"s":[8,8]},{"f":[],"id":"random--deepseek-flash--006","m":["B","A"],"p":["random","deepseek-flash"],"s":[5,0]},{"f":[],"id":"random--deepseek-flash--007","m":["A","A"],"p":["random","deepseek-flash"],"s":[3,3]},{"f":[],"id":"random--deepseek-flash--008","m":["BBB","ABB"],"p":["random","deepseek-flash"],"s":[7,2]},{"f":[[1,3,"retried,truncated"]],"id":"random--deepseek-flash--009","m":["ABAA","AABA"],"p":["random","deepseek-flash"],"s":[11,11]},{"f":[],"id":"random--gemini-flash--000","m":["BABABBAAAAABBBBA","ABABBBBBBBBBBBBB"],"p":["random","gemini-flash"],"s":[16,46]},{"f":[],"id":"random--gemini-flash--001","m":["BBABA","BBBBB"],"p":["random","gemini-flash"],"s":[3,13]},{"f":[],"id":"random--gemini-flash--002","m":["BAABBABABBAB","BBABBBBBBBBB"],"p":["random","gemini-flash"],"s":[10,30]},{"f":[],"id":"random--gemini-flash--003","m":["BAABBBBBAA","ABAABABBBB"],"p":["random","gemini-flash"],"s":[21,21]},{"f":[],"id":"random--gemini-flash--004","m":["BBBABAABBABA","ABBBABBBBBBB"],"p":["random","gemini-flash"],"s":[15,30]},{"f":[],"id":"random--gemini-flash--005","m":["BBBABBAB","ABBBBBBB"],"p":["random","gemini-flash"],"s":[10,15]},{"f":[],"id":"random--gemini-flash--006","m":["AAAA","AAAA"],"p":["random","gemini-flash"],"s":[12,12]},{"f":[],"id":"random--gemini-flash--007","m":["AAABABBBAABBBABABAAABAAAABA","AAAABBBBBBBBBBBBBBBBBBBBBBB"],"p":["random","gemini-flash"],"s":[24,84]},{"f":[],"id":"random--gemini-flash--008","m":["BABB","ABAB"],"p":["random","gemini-flash"],"s":[11,6]},{"f":[],"id":"random--gemini-flash--009","m":["AABABBBAABAA","AAABABBBBBBB"],"p":["random","gemini-flash"],"s":[19,34]},{"f":[],"id":"random--gpt-mini--000","m":["ABBBA","BBBBB"],"p":["random","gpt-mini"],"s":[3,13]},{"f":[],"id":"random--gpt-mini--001","m":["ABBBBA","AABBBB"],"p":["random","gpt-mini"],"s":[11,11]},{"f":[],"id":"random--gpt-mini--002","m":["AABBBBABBA","AAABABBBAB"],"p":["random","gpt-mini"],"s":[24,19]},{"f":[],"id":"random--gpt-mini--003","m":["ABABABABBBAAAAABABAABBBBABBAABB","AABABABBBBBABBBBABBBBBBBBBBBBBB"],"p":["random","gpt-mini"],"s":[37,82]},{"f":[],"id":"random--gpt-mini--004","m":["BBB","BAB"],"p":["random","gpt-mini"],"s":[7,2]},{"f":[],"id":"random--gpt-mini--005","m":["BAAA","ABAA"],"p":["random","gpt-mini"],"s":[11,11]},{"f":[],"id":"random--gpt-mini--006","m":["ABBAAAAABBAAABBBAAAABBB","AABBABAAAABAAABBABAAAAA"],"p":["random","gpt-mini"],"s":[65,50]},{"f":[],"id":"random--gpt-mini--007","m":["AABBABBBBAABABAAABAAABAA","AAABBBBBBBAABABBBAAABAAB"],"p":["random","gpt-mini"],"s":[48,63]},{"f":[],"id":"random--gpt-mini--008","m":["AABABABA","AABBAABA"],"p":["random","gpt-mini"],"s":[19,19]},{"f":[],"id":"random--gpt-mini--009","m":["BBAAA","ABBBA"],"p":["random","gpt-mini"],"s":[9,14]},{"f":[],"id":"random--haiku--000","m":["BABBBBBAB","ABBBBBBBB"],"p":["random","haiku"],"s":[11,16]},{"f":[],"id":"random--haiku--001","m":["B","A"],"p":["random","haiku"],"s":[5,0]},{"f":[],"id":"random--haiku--002","m":["AAAABBABBBAABBAAA","AAAAABBBBBBBBBBBB"],"p":["random","haiku"],"s":[23,48]},{"f":[],"id":"random--haiku--003","m":["B","A"],"p":["random","haiku"],"s":[5,0]},{"f":[],"id":"random--haiku--004","m":["AA","AA"],"p":["random","haiku"],"s":[6,6]},{"f":[],"id":"random--haiku--005","m":["AAABAAAAAAABAA","AAAABAAAAAAAAA"],"p":["random","haiku"],"s":[43,38]},{"f":[],"id":"random--haiku--006","m":["BAA","ABB"],"p":["random","haiku"],"s":[5,10]},{"f":[],"id":"random--haiku--007","m":["AAAAABAAABBABBABBBA","AAAAAABBBBBBBBBBBBB"],"p":["random","haiku"],"s":[27,52]},{"f":[],"id":"random--haiku--008","m":["AAB","AAA"],"p":["random","haiku"],"s":[11,6]},{"f":[],"id":"random--haiku--009","m":["AABBABAABBBABBA","AAABBBBBBBBBBBB"],"p":["random","haiku"],"s":[18,38]},{"f":[],"id":"tit-for-tat--deepseek-flash--000","m":["AA","AA"],"p":["tit-for-tat","deepseek-flash"],"s":[6,6]},{"f":[[1,1,"retried,truncated"]],"id":"tit-for-tat--deepseek-flash--001","m":["ABAAAAAAAAAAA","BAAAAAAAAAAAA"],"p":["tit-for-tat","deepseek-flash"],"s":[38,38]},{"f":[],"id":"tit-for-tat--deepseek-flash--002","m":["AAAAAAAA","AAAAAAAA"],"p":["tit-for-tat","deepseek-flash"],"s":[24,24]},{"f":[],"id":"tit-for-tat--deepseek-flash--003","m":["AA","AA"],"p":["tit-for-tat","deepseek-flash"],"s":[6,6]},{"f":[],"id":"tit-for-tat--deepseek-flash--004","m":["AAAA","AAAA"],"p":["tit-for-tat","deepseek-flash"],"s":[12,12]},{"f":[],"id":"tit-for-tat--deepseek-flash--005","m":["AAAAAA","AAAAAA"],"p":["tit-for-tat","deepseek-flash"],"s":[18,18]},{"f":[],"id":"tit-for-tat--deepseek-flash--006","m":["AAAAAAAAAA","AAAAAAAAAA"],"p":["tit-for-tat","deepseek-flash"],"s":[30,30]},{"f":[],"id":"tit-for-tat--deepseek-flash--007","m":["AAAAAAAAAAAAA","AAAAAAAAAAAAA"],"p":["tit-for-tat","deepseek-flash"],"s":[39,39]},{"f":[],"id":"tit-for-tat--deepseek-flash--008","m":["AAAAAAA","AAAAAAA"],"p":["tit-for-tat","deepseek-flash"],"s":[21,21]},{"f":[],"id":"tit-for-tat--deepseek-flash--009","m":["AAAAA","AAAAA"],"p":["tit-for-tat","deepseek-flash"],"s":[15,15]},{"f":[],"id":"tit-for-tat--gemini-flash--000","m":["AAAAAAAAAAAAAAAAAAAAA","AAAAAAAAAAAAAAAAAAAAA"],"p":["tit-for-tat","gemini-flash"],"s":[63,63]},{"f":[],"id":"tit-for-tat--gemini-flash--001","m":["AAAAA","AAAAA"],"p":["tit-for-tat","gemini-flash"],"s":[15,15]},{"f":[],"id":"tit-for-tat--gemini-flash--002","m":["ABBABBBBBBBBBBBBBBBBBBB","BBABBBBBBBBBBBBBBBBBBBB"],"p":["tit-for-tat","gemini-flash"],"s":[25,30]},{"f":[],"id":"tit-for-tat--gemini-flash--003","m":["ABABB","BABBA"],"p":["tit-for-tat","gemini-flash"],"s":[11,11]},{"f":[],"id":"tit-for-tat--gemini-flash--004","m":["AAAAAAAAA","AAAAAAAAA"],"p":["tit-for-tat","gemini-flash"],"s":[27,27]},{"f":[],"id":"tit-for-tat--gemini-flash--005","m":["ABABBABBB","BABBABBBB"],"p":["tit-for-tat","gemini-flash"],"s":[14,19]},{"f":[],"id":"tit-for-tat--gemini-flash--006","m":["AAAAAAAAAAAAAA","AAAAAAAAAAAAAA"],"p":["tit-for-tat","gemini-flash"],"s":[42,42]},{"f":[],"id":"tit-for-tat--gemini-flash--007","m":["AAAAAA","AAAAAA"],"p":["tit-for-tat","gemini-flash"],"s":[18,18]},{"f":[],"id":"tit-for-tat--gemini-flash--008","m":["A","A"],"p":["tit-for-tat","gemini-flash"],"s":[3,3]},{"f":[],"id":"tit-for-tat--gemini-flash--009","m":["AB","BB"],"p":["tit-for-tat","gemini-flash"],"s":[1,6]},{"f":[],"id":"tit-for-tat--gpt-mini--000","m":["AAAAAAAA","AAAAAAAA"],"p":["tit-for-tat","gpt-mini"],"s":[24,24]},{"f":[],"id":"tit-for-tat--gpt-mini--001","m":["AAAAAAAAAA","AAAAAAAAAA"],"p":["tit-for-tat","gpt-mini"],"s":[30,30]},{"f":[],"id":"tit-for-tat--gpt-mini--002","m":["A","A"],"p":["tit-for-tat","gpt-mini"],"s":[3,3]},{"f":[],"id":"tit-for-tat--gpt-mini--003","m":["AAAA","AAAA"],"p":["tit-for-tat","gpt-mini"],"s":[12,12]},{"f":[],"id":"tit-for-tat--gpt-mini--004","m":["AAAAAAAAAAAAAAAAAAAAAAA","AAAAAAAAAAAAAAAAAAAAAAA"],"p":["tit-for-tat","gpt-mini"],"s":[69,69]},{"f":[],"id":"tit-for-tat--gpt-mini--005","m":["A","A"],"p":["tit-for-tat","gpt-mini"],"s":[3,3]},{"f":[],"id":"tit-for-tat--gpt-mini--006","m":["AAAAAAAAAAAAAAAA","AAAAAAAAAAAAAAAA"],"p":["tit-for-tat","gpt-mini"],"s":[48,48]},{"f":[],"id":"tit-for-tat--gpt-mini--007","m":["ABABABBBB","BABABBBBA"],"p":["tit-for-tat","gpt-mini"],"s":[18,18]},{"f":[],"id":"tit-for-tat--gpt-mini--008","m":["A","A"],"p":["tit-for-tat","gpt-mini"],"s":[3,3]},{"f":[],"id":"tit-for-tat--gpt-mini--009","m":["A","B"],"p":["tit-for-tat","gpt-mini"],"s":[0,5]},{"f":[],"id":"tit-for-tat--grim-trigger--000","m":["AAAA","AAAA"],"p":["tit-for-tat","grim-trigger"],"s":[12,12]},{"f":[],"id":"tit-for-tat--grim-trigger--001","m":["AAAAAAAAA","AAAAAAAAA"],"p":["tit-for-tat","grim-trigger"],"s":[27,27]},{"f":[],"id":"tit-for-tat--grim-trigger--002","m":["AAAAAAAAAAAA","AAAAAAAAAAAA"],"p":["tit-for-tat","grim-trigger"],"s":[36,36]},{"f":[],"id":"tit-for-tat--grim-trigger--003","m":["AAAAAAAAAAAAAAAAA","AAAAAAAAAAAAAAAAA"],"p":["tit-for-tat","grim-trigger"],"s":[51,51]},{"f":[],"id":"tit-for-tat--grim-trigger--004","m":["AAAAA","AAAAA"],"p":["tit-for-tat","grim-trigger"],"s":[15,15]},{"f":[],"id":"tit-for-tat--grim-trigger--005","m":["AAAAAAAAAAAAAAAAAAAAAAAAAAA","AAAAAAAAAAAAAAAAAAAAAAAAAAA"],"p":["tit-for-tat","grim-trigger"],"s":[81,81]},{"f":[],"id":"tit-for-tat--grim-trigger--006","m":["AAAAAAAAAAAAAAAA","AAAAAAAAAAAAAAAA"],"p":["tit-for-tat","grim-trigger"],"s":[48,48]},{"f":[],"id":"tit-for-tat--grim-trigger--007","m":["AA","AA"],"p":["tit-for-tat","grim-trigger"],"s":[6,6]},{"f":[],"id":"tit-for-tat--grim-trigger--008","m":["AA","AA"],"p":["tit-for-tat","grim-trigger"],"s":[6,6]},{"f":[],"id":"tit-for-tat--grim-trigger--009","m":["AA","AA"],"p":["tit-for-tat","grim-trigger"],"s":[6,6]},{"f":[],"id":"tit-for-tat--haiku--000","m":["AA","AA"],"p":["tit-for-tat","haiku"],"s":[6,6]},{"f":[],"id":"tit-for-tat--haiku--001","m":["AAAAAAA","AAAAAAA"],"p":["tit-for-tat","haiku"],"s":[21,21]},{"f":[],"id":"tit-for-tat--haiku--002","m":["AAAAAAAAAAAAAAAA","AAAAAAAAAAAAAAAA"],"p":["tit-for-tat","haiku"],"s":[48,48]},{"f":[],"id":"tit-for-tat--haiku--003","m":["AAAAAA","AAAAAA"],"p":["tit-for-tat","haiku"],"s":[18,18]},{"f":[],"id":"tit-for-tat--haiku--004","m":["AAAAAAAAA","AAAAAAAAA"],"p":["tit-for-tat","haiku"],"s":[27,27]},{"f":[],"id":"tit-for-tat--haiku--005","m":["AAAAAAA","AAAAAAA"],"p":["tit-for-tat","haiku"],"s":[21,21]},{"f":[],"id":"tit-for-tat--haiku--006","m":["AAAAA","AAAAA"],"p":["tit-for-tat","haiku"],"s":[15,15]},{"f":[],"id":"tit-for-tat--haiku--007","m":["AA","AA"],"p":["tit-for-tat","haiku"],"s":[6,6]},{"f":[],"id":"tit-for-tat--haiku--008","m":["AAAA","AAAA"],"p":["tit-for-tat","haiku"],"s":[12,12]},{"f":[],"id":"tit-for-tat--haiku--009","m":["AAAAAA","AAAAAA"],"p":["tit-for-tat","haiku"],"s":[18,18]},{"f":[],"id":"tit-for-tat--random--000","m":["AAB","ABB"],"p":["tit-for-tat","random"],"s":[4,9]},{"f":[],"id":"tit-for-tat--random--001","m":["ABAABABBBBAABAAAABB","BAABABBBBAABAAAABBB"],"p":["tit-for-tat","random"],"s":[40,45]},{"f":[],"id":"tit-for-tat--random--002","m":["AABABBABABB","ABABBABABBA"],"p":["tit-for-tat","random"],"s":[25,25]},{"f":[],"id":"tit-for-tat--random--003","m":["ABB","BBB"],"p":["tit-for-tat","random"],"s":[2,7]},{"f":[],"id":"tit-for-tat--random--004","m":["AAAAAA","AAAAAA"],"p":["tit-for-tat","random"],"s":[18,18]},{"f":[],"id":"tit-for-tat--random--005","m":["ABABA","BABAA"],"p":["tit-for-tat","random"],"s":[13,13]},{"f":[],"id":"tit-for-tat--random--006","m":["AABA","ABAB"],"p":["tit-for-tat","random"],"s":[8,13]},{"f":[],"id":"tit-for-tat--random--007","m":["ABBBB","BBBBB"],"p":["tit-for-tat","random"],"s":[4,9]},{"f":[],"id":"tit-for-tat--random--008","m":["AA","AB"],"p":["tit-for-tat","random"],"s":[3,8]},{"f":[],"id":"tit-for-tat--random--009","m":["ABBBB","BBBBA"],"p":["tit-for-tat","random"],"s":[8,8]}],"mutual":{"always-cooperate|always-defect":{"hi":0.0,"lo":0.0,"n":10,"v":0.0},"always-cooperate|deepseek-flash":{"hi":1.0,"lo":1.0,"n":10,"v":1.0},"always-cooperate|gemini-flash":{"hi":1.0,"lo":0.5,"n":10,"v":0.8065},"always-cooperate|gpt-mini":{"hi":1.0,"lo":0.875,"n":10,"v":0.9524},"always-cooperate|grim-trigger":{"hi":1.0,"lo":1.0,"n":10,"v":1.0},"always-cooperate|haiku":{"hi":1.0,"lo":1.0,"n":10,"v":1.0},"always-cooperate|random":{"hi":0.5298,"lo":0.377,"n":10,"v":0.469},"always-cooperate|tit-for-tat":{"hi":1.0,"lo":1.0,"n":10,"v":1.0},"always-defect|deepseek-flash":{"hi":0.0,"lo":0.0,"n":10,"v":0.0},"always-defect|gemini-flash":{"hi":0.0,"lo":0.0,"n":10,"v":0.0},"always-defect|gpt-mini":{"hi":0.0,"lo":0.0,"n":10,"v":0.0},"always-defect|grim-trigger":{"hi":0.0,"lo":0.0,"n":10,"v":0.0},"always-defect|haiku":{"hi":0.0,"lo":0.0,"n":10,"v":0.0},"always-defect|random":{"hi":0.0,"lo":0.0,"n":10,"v":0.0},"always-defect|tit-for-tat":{"hi":0.0,"lo":0.0,"n":10,"v":0.0},"deepseek-flash|deepseek-flash":{"hi":1.0,"lo":1.0,"n":10,"v":1.0},"deepseek-flash|gemini-flash":{"hi":1.0,"lo":0.5556,"n":10,"v":0.8049},"deepseek-flash|gpt-mini":{"hi":1.0,"lo":0.5556,"n":10,"v":0.8667},"deepseek-flash|grim-trigger":{"hi":1.0,"lo":1.0,"n":10,"v":1.0},"deepseek-flash|haiku":{"hi":1.0,"lo":1.0,"n":10,"v":1.0},"deepseek-flash|random":{"hi":0.32,"lo":0.032,"n":10,"v":0.0886},"deepseek-flash|tit-for-tat":{"hi":1.0,"lo":0.92,"n":10,"v":0.9714},"gemini-flash|gemini-flash":{"hi":0.8958,"lo":0.1707,"n":10,"v":0.6032},"gemini-flash|gpt-mini":{"hi":0.8571,"lo":0.0833,"n":10,"v":0.4561},"gemini-flash|grim-trigger":{"hi":0.784,"lo":0.0699,"n":10,"v":0.3963},"gemini-flash|haiku":{"hi":0.8,"lo":0.1102,"n":10,"v":0.4022},"gemini-flash|random":{"hi":0.2048,"lo":0.0312,"n":10,"v":0.1},"gemini-flash|tit-for-tat":{"hi":0.9512,"lo":0.2089,"n":10,"v":0.5895},"gpt-mini|gpt-mini":{"hi":0.983,"lo":0.7031,"n":10,"v":0.8947},"gpt-mini|grim-trigger":{"hi":1.0,"lo":0.4824,"n":10,"v":0.7711},"gpt-mini|haiku":{"hi":1.0,"lo":0.4483,"n":10,"v":0.8152},"gpt-mini|random":{"hi":0.3429,"lo":0.1393,"n":10,"v":0.2353},"gpt-mini|tit-for-tat":{"hi":1.0,"lo":0.5238,"n":10,"v":0.8649},"grim-trigger|haiku":{"hi":1.0,"lo":1.0,"n":10,"v":1.0},"grim-trigger|random":{"hi":0.2553,"lo":0.0326,"n":10,"v":0.0968},"grim-trigger|tit-for-tat":{"hi":1.0,"lo":1.0,"n":10,"v":1.0},"haiku|haiku":{"hi":1.0,"lo":1.0,"n":10,"v":1.0},"haiku|random":{"hi":0.5357,"lo":0.1429,"n":10,"v":0.3095},"haiku|tit-for-tat":{"hi":1.0,"lo":1.0,"n":10,"v":1.0},"random|tit-for-tat":{"hi":0.4426,"lo":0.1077,"n":10,"v":0.254}},"notes_html":"<h3>What the run shows<\/h3>\n<p>Stated no more strongly than the intervals allow:<\/p>\n<ul><li><strong>Haiku and DeepSeek play almost exactly like Grim Trigger.<\/strong> They open with A, answer a betrayal with B 98–99% of the time, and almost never go back to A. Haiku's move matches Grim Trigger's rule in 99% of rounds [97–100]. That style earned the most per round in this field, though the top four players' intervals overlap.<\/li><li><strong>Gemini Flash is the clear outlier on cooperation.<\/strong> It chose A in 49% of its rounds against Haiku's 81%, and those intervals do not overlap. Its higher payoff against an unconditional cooperator (3.39) and lower payoff per round (2.27) both have intervals that overlap the other models', so they are leads to test with more matches, not findings. Gemini and Haiku cooperated in only 40% [11–80] of the rounds they played against each other.<\/li><li><strong>GPT-5 mini forgives more often than Haiku<\/strong> (10% [5–17] against 1% [0–2]) and retaliates less consistently (91% [86–95] against 99% [98–100]).<\/li><li><strong>Against themselves,<\/strong> Haiku and DeepSeek cooperated in every round; Gemini managed 60% [17–90].<\/li><\/ul>\n<h3>Conditions the results depend on<\/h3>\n<ul><li>One framing of the game: neutral A/B labels, the payoff table, a 10% chance of ending after each round, simultaneous moves. A different framing could change behaviour.<\/li><li>Temperature 0.7, and every model asked for low reasoning effort. The same request does not produce the same amount of thinking: per call, Haiku reasoned for about 13 tokens, GPT-5 mini 234, Gemini 359 and DeepSeek 734.<\/li><li>This field of opponents. In a round-robin, payoff rankings depend on who else is playing, so they describe this tournament, not the models in general. Cooperation, retaliation and forgiveness depend less on the field than payoff does.<\/li><li>DeepSeek forfeited 1% of its rounds (an answer still cut off at a 4,000-token cap), recorded as B. That is under the 2% validity threshold, but it slightly lowers DeepSeek's cooperation figure.<\/li><li>90 matches per model. Differences inside the intervals are not findings.<\/li><\/ul>","payoff":{"always-cooperate":{"always-defect":0.0,"deepseek-flash":3.0,"gemini-flash":2.4194,"gpt-mini":2.8571,"grim-trigger":3.0,"haiku":3.0,"random":1.4071,"tit-for-tat":3.0},"always-defect":{"always-cooperate":5.0,"deepseek-flash":1.3509,"gemini-flash":1.2569,"gpt-mini":1.2667,"grim-trigger":1.4124,"haiku":1.4,"random":2.9806,"tit-for-tat":1.3448},"deepseek-flash":{"always-cooperate":3.0,"always-defect":0.9123,"deepseek-flash":3.0,"gemini-flash":2.7317,"gpt-mini":2.8,"grim-trigger":3.0,"haiku":3.0,"random":2.7468,"tit-for-tat":2.9857},"gemini-flash":{"always-cooperate":3.3871,"always-defect":0.9358,"deepseek-flash":2.8537,"gemini-flash":2.4444,"gpt-mini":2.1754,"grim-trigger":1.8659,"haiku":1.9565,"random":2.6455,"tit-for-tat":2.4632},"gpt-mini":{"always-cooperate":3.0952,"always-defect":0.9333,"deepseek-flash":2.8667,"gemini-flash":1.9123,"gpt-mini":2.8816,"grim-trigger":2.5783,"haiku":2.6957,"random":2.3866,"tit-for-tat":2.9054},"grim-trigger":{"always-cooperate":3.0,"always-defect":0.8969,"deepseek-flash":3.0,"gemini-flash":1.9573,"gpt-mini":2.759,"haiku":3.0,"random":2.3441,"tit-for-tat":3.0},"haiku":{"always-cooperate":3.0,"always-defect":0.9,"deepseek-flash":3.0,"gemini-flash":1.8478,"gpt-mini":2.6957,"grim-trigger":3.0,"haiku":3.0,"random":2.5476,"tit-for-tat":3.0},"random":{"always-cooperate":4.0619,"always-defect":0.5049,"deepseek-flash":1.3544,"gemini-flash":1.2818,"gpt-mini":1.9664,"grim-trigger":1.2688,"haiku":1.8333,"tit-for-tat":2.4603},"tit-for-tat":{"always-cooperate":3.0,"always-defect":0.9138,"deepseek-flash":2.9857,"gemini-flash":2.3053,"gpt-mini":2.8378,"grim-trigger":3.0,"haiku":3.0,"random":1.9841}},"players":[{"cooperation":{"hi":0.8916,"lo":0.7099,"n":90,"v":0.8127},"fingerprints":{"always-cooperate":{"hi":0.8916,"lo":0.7099,"n":90,"v":0.8127},"always-defect":{"hi":0.2899,"lo":0.1081,"n":90,"v":0.1873},"grim-trigger":{"hi":1.0,"lo":0.972,"n":90,"v":0.9917},"tit-for-tat":{"hi":0.9927,"lo":0.9616,"n":90,"v":0.9798}},"forfeits":{"hi":0.0,"lo":0.0,"n":90,"v":0.0},"forgiveness":{"hi":0.0219,"lo":0.0,"n":90,"v":0.006},"kind":"model","label":"Claude Haiku 5.5","latency_ms_p50":767,"matches":90,"model":"anthropic/claude-haiku-5.5","name":"haiku","payoff":{"hi":2.7975,"lo":2.4508,"n":90,"v":2.6492},"reasoning":"low","reasoning_tokens_per_call":13,"retaliation":{"hi":1.0,"lo":0.9806,"n":90,"v":0.9946},"retried":{"hi":0.0,"lo":0.0,"n":90,"v":0.0},"short":"Haiku","truncated":{"hi":0.0,"lo":0.0,"n":90,"v":0.0},"vs_always_cooperate":{"hi":3.0,"lo":3.0,"n":10,"v":3.0}},{"cooperation":{"hi":0.9076,"lo":0.621,"n":90,"v":0.7677},"fingerprints":{"always-cooperate":{"hi":0.9076,"lo":0.621,"n":90,"v":0.7677},"always-defect":{"hi":0.3781,"lo":0.0918,"n":90,"v":0.2323},"grim-trigger":{"hi":0.9893,"lo":0.9061,"n":90,"v":0.9541},"tit-for-tat":{"hi":0.9975,"lo":0.8989,"n":90,"v":0.9567}},"forfeits":{"hi":0.0177,"lo":0.0,"n":90,"v":0.0052},"forgiveness":{"hi":0.1622,"lo":0.0165,"n":90,"v":0.0522},"kind":"model","label":"DeepSeek V4.1 Flash","latency_ms_p50":3311,"matches":90,"model":"deepseek/deepseek-v4.1-flash","name":"deepseek-flash","payoff":{"hi":2.8725,"lo":2.3417,"n":90,"v":2.626},"reasoning":"low","reasoning_tokens_per_call":734,"retaliation":{"hi":1.0,"lo":0.9351,"n":90,"v":0.98},"retried":{"hi":0.0308,"lo":0.0088,"n":90,"v":0.0197},"short":"DeepSeek","truncated":{"hi":0.046,"lo":0.0092,"n":90,"v":0.0249},"vs_always_cooperate":{"hi":3.0,"lo":3.0,"n":10,"v":3.0}},{"cooperation":{"hi":0.8788,"lo":0.6267,"n":80,"v":0.7546},"fingerprints":{"always-cooperate":{"hi":0.8788,"lo":0.6267,"n":80,"v":0.7546},"always-defect":{"hi":0.3727,"lo":0.121,"n":80,"v":0.2454},"grim-trigger":{"hi":0.9877,"lo":0.9061,"n":80,"v":0.9546},"tit-for-tat":{"hi":1.0,"lo":1.0,"n":80,"v":1.0}},"forfeits":{"hi":0.0,"lo":0.0,"n":80,"v":0.0},"forgiveness":{"hi":0.2769,"lo":0.0402,"n":80,"v":0.1118},"kind":"bot","label":"Tit-for-Tat","matches":80,"name":"tit-for-tat","payoff":{"hi":2.7067,"lo":2.1859,"n":80,"v":2.4539},"retaliation":{"hi":1.0,"lo":1.0,"n":80,"v":1.0},"retried":{"hi":0.0,"lo":0.0,"n":80,"v":0.0},"rule":"Plays A first, then copies the opponent's last move.","short":"Tit-for-Tat","truncated":{"hi":0.0,"lo":0.0,"n":80,"v":0.0},"vs_always_cooperate":{"hi":3.0,"lo":3.0,"n":10,"v":3.0}},{"cooperation":{"hi":0.7934,"lo":0.568,"n":90,"v":0.6862},"fingerprints":{"always-cooperate":{"hi":0.7934,"lo":0.568,"n":90,"v":0.6862},"always-defect":{"hi":0.4316,"lo":0.2064,"n":90,"v":0.3138},"grim-trigger":{"hi":0.9427,"lo":0.852,"n":90,"v":0.9006},"tit-for-tat":{"hi":0.9506,"lo":0.8815,"n":90,"v":0.9193}},"forfeits":{"hi":0.0,"lo":0.0,"n":90,"v":0.0},"forgiveness":{"hi":0.1673,"lo":0.0531,"n":90,"v":0.1005},"kind":"model","label":"GPT-5 mini","latency_ms_p50":3943,"matches":90,"model":"openai/gpt-5-mini","name":"gpt-mini","payoff":{"hi":2.6385,"lo":2.1898,"n":90,"v":2.4287},"reasoning":"low","reasoning_tokens_per_call":234,"retaliation":{"hi":0.949,"lo":0.8578,"n":90,"v":0.9105},"retried":{"hi":0.0,"lo":0.0,"n":90,"v":0.0},"short":"GPT-5 mini","truncated":{"hi":0.0,"lo":0.0,"n":90,"v":0.0},"vs_always_cooperate":{"hi":3.25,"lo":3.0,"n":10,"v":3.0952}},{"cooperation":{"hi":0.7912,"lo":0.5248,"n":80,"v":0.6544},"fingerprints":{"always-cooperate":{"hi":0.7912,"lo":0.5248,"n":80,"v":0.6544},"always-defect":{"hi":0.4751,"lo":0.2083,"n":80,"v":0.3456},"grim-trigger":{"hi":1.0,"lo":1.0,"n":80,"v":1.0},"tit-for-tat":{"hi":0.9788,"lo":0.9145,"n":80,"v":0.9494}},"forfeits":{"hi":0.0,"lo":0.0,"n":80,"v":0.0},"forgiveness":{"hi":0.0,"lo":0.0,"n":80,"v":0.0},"kind":"bot","label":"Grim Trigger","matches":80,"name":"grim-trigger","payoff":{"hi":2.6542,"lo":2.1874,"n":80,"v":2.4228},"retaliation":{"hi":1.0,"lo":1.0,"n":80,"v":1.0},"retried":{"hi":0.0,"lo":0.0,"n":80,"v":0.0},"rule":"Plays A until the opponent plays B once, then B forever.","short":"Grim","truncated":{"hi":0.0,"lo":0.0,"n":80,"v":0.0},"vs_always_cooperate":{"hi":3.0,"lo":3.0,"n":10,"v":3.0}},{"cooperation":{"hi":1.0,"lo":1.0,"n":80,"v":1.0},"fingerprints":{"always-cooperate":{"hi":1.0,"lo":1.0,"n":80,"v":1.0},"always-defect":{"hi":0.0,"lo":0.0,"n":80,"v":0.0},"grim-trigger":{"hi":0.8563,"lo":0.629,"n":80,"v":0.7477},"tit-for-tat":{"hi":0.8917,"lo":0.7009,"n":80,"v":0.8035}},"forfeits":{"hi":0.0,"lo":0.0,"n":80,"v":0.0},"forgiveness":null,"kind":"bot","label":"Always Cooperate","matches":80,"name":"always-cooperate","payoff":{"hi":2.6133,"lo":1.9986,"n":80,"v":2.3227},"retaliation":{"hi":0.0,"lo":0.0,"n":80,"v":0.0},"retried":{"hi":0.0,"lo":0.0,"n":80,"v":0.0},"rule":"Always plays A.","short":"Always A","truncated":{"hi":0.0,"lo":0.0,"n":80,"v":0.0},"vs_always_cooperate":null},{"cooperation":{"hi":0.616,"lo":0.3747,"n":90,"v":0.4924},"fingerprints":{"always-cooperate":{"hi":0.616,"lo":0.3747,"n":90,"v":0.4924},"always-defect":{"hi":0.6246,"lo":0.384,"n":90,"v":0.5076},"grim-trigger":{"hi":0.9265,"lo":0.8427,"n":90,"v":0.8911},"tit-for-tat":{"hi":0.9022,"lo":0.8036,"n":90,"v":0.8584}},"forfeits":{"hi":0.0,"lo":0.0,"n":90,"v":0.0},"forgiveness":{"hi":0.0745,"lo":0.0197,"n":90,"v":0.0406},"kind":"model","label":"Gemini 2.5 Flash","latency_ms_p50":2255,"matches":90,"model":"google/gemini-2.5-flash","name":"gemini-flash","payoff":{"hi":2.5307,"lo":1.9989,"n":90,"v":2.268},"reasoning":"low","reasoning_tokens_per_call":359,"retaliation":{"hi":0.9694,"lo":0.9268,"n":90,"v":0.9516},"retried":{"hi":0.0,"lo":0.0,"n":90,"v":0.0},"short":"Gemini","truncated":{"hi":0.0,"lo":0.0,"n":90,"v":0.0},"vs_always_cooperate":{"hi":4.0,"lo":3.0,"n":10,"v":3.3871}},{"cooperation":{"hi":0.0,"lo":0.0,"n":80,"v":0.0},"fingerprints":{"always-cooperate":{"hi":0.0,"lo":0.0,"n":80,"v":0.0},"always-defect":{"hi":1.0,"lo":1.0,"n":80,"v":1.0},"grim-trigger":{"hi":0.8191,"lo":0.6601,"n":80,"v":0.7506},"tit-for-tat":{"hi":0.7819,"lo":0.6074,"n":80,"v":0.7063}},"forfeits":{"hi":0.0,"lo":0.0,"n":80,"v":0.0},"forgiveness":{"hi":0.0,"lo":0.0,"n":80,"v":0.0},"kind":"bot","label":"Always Defect","matches":80,"name":"always-defect","payoff":{"hi":2.2775,"lo":1.585,"n":80,"v":1.8904},"retaliation":{"hi":1.0,"lo":1.0,"n":80,"v":1.0},"retried":{"hi":0.0,"lo":0.0,"n":80,"v":0.0},"rule":"Always plays B.","short":"Always B","truncated":{"hi":0.0,"lo":0.0,"n":80,"v":0.0},"vs_always_cooperate":{"hi":5.0,"lo":5.0,"n":10,"v":5.0}},{"cooperation":{"hi":0.5255,"lo":0.4495,"n":80,"v":0.4895},"fingerprints":{"always-cooperate":{"hi":0.5255,"lo":0.4495,"n":80,"v":0.4895},"always-defect":{"hi":0.5504,"lo":0.4743,"n":80,"v":0.5105},"grim-trigger":{"hi":0.5461,"lo":0.4758,"n":80,"v":0.5105},"tit-for-tat":{"hi":0.5593,"lo":0.4803,"n":80,"v":0.5196}},"forfeits":{"hi":0.0,"lo":0.0,"n":80,"v":0.0},"forgiveness":{"hi":0.5296,"lo":0.3891,"n":80,"v":0.4573},"kind":"bot","label":"Random","matches":80,"name":"random","payoff":{"hi":2.2118,"lo":1.5345,"n":80,"v":1.8586},"retaliation":{"hi":0.5827,"lo":0.4769,"n":80,"v":0.5274},"retried":{"hi":0.0,"lo":0.0,"n":80,"v":0.0},"rule":"Plays A or B with equal chance.","short":"Random","truncated":{"hi":0.0,"lo":0.0,"n":80,"v":0.0},"vs_always_cooperate":{"hi":4.2453,"lo":3.9399,"n":10,"v":4.0619}}],"repo":"https://github.com/kennethkimbrough/tit-for-token","run":{"bootstrap_reps":2000,"end_probability":0.1,"matches":400,"matches_per_pairing":10,"model_calls":3693,"name":"m1-small-models","path":"runs/m1-small-models","rounds":3772,"seed":20261030,"spent_usd":2.65876,"temperature":0.7}}</script>
+<script>
+(function () {
+  "use strict";
+  const DATA = JSON.parse(document.getElementById("data").textContent);
+  const P = Object.fromEntries(DATA.players.map(p => [p.name, p]));
+  const esc = s => String(s).replace(/[&<>"']/g, c => ({"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"}[c]));
+  const pct = v => Math.round(v * 100) + "%";
+  const fix = v => v.toFixed(2);
+  const label = n => (P[n] ? P[n].label : n);
+  const short = n => (P[n] ? P[n].short : n);
+
+  // ---------- header ----------
+  const run = DATA.run;
+  document.getElementById("repo-link").href = DATA.repo;
+  const chips = [
+    ["<b>" + run.matches.toLocaleString() + "</b> matches"],
+    ["<b>" + run.rounds.toLocaleString() + "</b> rounds"],
+    run.model_calls ? ["<b>" + run.model_calls.toLocaleString() + "</b> recorded model calls"] : null,
+    ["<b>" + run.matches_per_pairing + "</b> matches per pairing"],
+    run.spent_usd ? ["about <b>$" + run.spent_usd.toFixed(2) + "</b> of API calls"] : null,
+  ].filter(Boolean);
+  document.getElementById("chips").innerHTML = chips.map(c => '<span class="chip">' + c[0] + "</span>").join("");
+
+  // ---------- leaderboard ----------
+  const COLS = [
+    {key: "payoff", title: "Payoff / round", max: 5, fmt: fix},
+    {key: "cooperation", title: "Cooperates", max: 1, fmt: pct},
+    {key: "retaliation", title: "Retaliates", max: 1, fmt: pct},
+    {key: "forgiveness", title: "Forgives", max: 1, fmt: pct},
+    {key: "vs_always_cooperate", title: "vs Always A", max: 5, fmt: fix},
+  ];
+  let sortKey = "payoff", sortDir = -1;
+
+  function metricCell(e, col) {
+    if (!e) return '<td class="metric"><span class="na">–</span></td>';
+    const L = Math.max(0, e.lo / col.max * 100), H = Math.min(100, e.hi / col.max * 100), V = e.v / col.max * 100;
+    const ci = e.lo === e.hi ? "" : '<span class="ci">' + col.fmt(e.lo) + "–" + col.fmt(e.hi) + "</span>";
+    return '<td class="metric"><span class="num">' + col.fmt(e.v) + "</span>" + ci +
+      '<div class="track" aria-hidden="true"><div class="band" style="left:' + L + "%;width:" + Math.max(H - L, 0.6) + '%"></div>' +
+      '<div class="tick" style="left:' + V + '%"></div></div></td>';
+  }
+
+  function whoCell(p) {
+    const sub = p.kind === "model"
+      ? (p.reasoning ? p.reasoning + " reasoning effort" : "") + (p.reasoning_tokens_per_call != null ? " · ~" + p.reasoning_tokens_per_call + " thinking tokens per move" : "")
+      : p.rule;
+    return '<td class="who"><b>' + esc(p.label) + '<span class="tag ' + p.kind + '">' + p.kind + "</span></b><span>" + esc(sub) + "</span></td>";
+  }
+
+  function renderBoard() {
+    const rows = DATA.players.slice().sort((a, b) => {
+      const x = a[sortKey], y = b[sortKey];
+      if (!x && !y) return 0; if (!x) return 1; if (!y) return -1;
+      return sortDir * (x.v - y.v) || a.label.localeCompare(b.label);
+    });
+    const head = "<thead><tr><th>Player</th>" + COLS.map(c =>
+      '<th><button type="button" data-key="' + c.key + '"' + (c.key === sortKey ? ' aria-sort="' + (sortDir < 0 ? "descending" : "ascending") + '"' : "") + ">" +
+      c.title + '<span class="arrow">' + (c.key === sortKey && sortDir > 0 ? "▲" : "▼") + "</span></button></th>").join("") + "</tr></thead>";
+    const body = "<tbody>" + rows.map(p => '<tr class="' + p.kind + '">' + whoCell(p) + COLS.map(c => metricCell(p[c.key], c)).join("") + "</tr>").join("") + "</tbody>";
+    const t = document.getElementById("board");
+    t.innerHTML = head + body;
+    t.querySelectorAll("th button").forEach(b => b.addEventListener("click", () => {
+      const k = b.dataset.key;
+      if (k === sortKey) sortDir = -sortDir; else { sortKey = k; sortDir = -1; }
+      renderBoard();
+      t.querySelector('th button[data-key="' + k + '"]').focus();
+    }));
+  }
+  renderBoard();
+
+  // ---------- pairing grid ----------
+  const order = DATA.players.slice().sort((a, b) => (a.kind === b.kind ? b.payoff.v - a.payoff.v : a.kind === "model" ? -1 : 1)).map(p => p.name);
+  let measure = "mutual";
+
+  function rgb(name) {
+    const probe = document.createElement("span");
+    probe.style.color = "var(" + name + ")";
+    document.body.appendChild(probe);
+    const m = getComputedStyle(probe).color.match(/\d+(\.\d+)?/g).map(Number);
+    probe.remove();
+    return m.slice(0, 3);
+  }
+  function heat(t) {
+    const lo = rgb("--heat-lo"), mid = rgb("--heat-mid"), hi = rgb("--heat-hi");
+    const [a, b, u] = t < 0.5 ? [lo, mid, t / 0.5] : [mid, hi, (t - 0.5) / 0.5];
+    return "rgb(" + a.map((x, i) => Math.round(x + (b[i] - x) * u)).join(",") + ")";
+  }
+  function pairKey(a, b) { return [a, b].sort().join("|"); }
+
+  function renderGrid() {
+    const sub = measure === "mutual"
+      ? "Share of rounds in which both players chose A, for every pairing (the grid is symmetric). Ten matches per pairing, so the intervals are wide; hover a cell for its interval."
+      : "Mean payoff per round for the row player against the column player (3 is mutual cooperation, 5 is exploiting the opponent every round, 0 is being exploited every round).";
+    document.getElementById("grid-sub").textContent = sub;
+    document.getElementById("scale-lo").textContent = measure === "mutual" ? "0%" : "0";
+    document.getElementById("scale-hi").textContent = measure === "mutual" ? "100%" : "5";
+    let h = '<thead><tr><th></th>' + order.map(n => '<th scope="col"><span>' + esc(short(n)) + "</span></th>").join("") + "</tr></thead><tbody>";
+    for (const r of order) {
+      h += '<tr><th scope="row">' + esc(short(r)) + "</th>";
+      for (const c of order) {
+        let v = null, title = "";
+        if (measure === "mutual") {
+          const e = DATA.mutual[pairKey(r, c)];
+          if (e) { v = e.v; title = label(r) + " and " + label(c) + ": both chose A in " + pct(e.v) + " of rounds (95% interval " + pct(e.lo) + "–" + pct(e.hi) + ")"; }
+        } else {
+          const x = (DATA.payoff[r] || {})[c];
+          if (x != null) { v = x / 5; title = label(r) + " earned " + fix(x) + " per round against " + label(c); }
+        }
+        if (v == null) { h += '<td><span class="empty" title="No matches"></span></td>'; continue; }
+        const text = measure === "mutual" ? pct(v) : fix(v * 5);
+        h += '<td><button type="button" data-r="' + esc(r) + '" data-c="' + esc(c) + '" title="' + esc(title) + '" aria-label="' + esc(title) + '" style="background:' + heat(v) + '">' + text + "</button></td>";
+      }
+      h += "</tr>";
+    }
+    const g = document.getElementById("grid");
+    g.innerHTML = h + "</tbody>";
+    g.querySelectorAll("button").forEach(b => b.addEventListener("click", () => {
+      selectPairing(b.dataset.r, b.dataset.c);
+      document.getElementById("viewer").scrollIntoView({behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth"});
+    }));
+  }
+  document.querySelectorAll(".toggle button").forEach(b => b.addEventListener("click", () => {
+    measure = b.dataset.measure;
+    document.querySelectorAll(".toggle button").forEach(x => x.setAttribute("aria-pressed", x === b ? "true" : "false"));
+    renderGrid();
+  }));
+  renderGrid();
+  matchMedia("(prefers-color-scheme: dark)").addEventListener("change", renderGrid);
+
+  // ---------- match viewer ----------
+  const byPair = new Map();
+  for (const m of DATA.matches) {
+    const k = m.p[0] + "|" + m.p[1];
+    if (!byPair.has(k)) byPair.set(k, []);
+    byPair.get(k).push(m);
+  }
+  const MATCH = Object.fromEntries(DATA.matches.map(m => [m.id, m]));
+  const sel = document.getElementById("pairing");
+  const pairs = [...byPair.keys()].sort((x, y) => {
+    const rank = k => k.split("|").map(n => (P[n].kind === "model" ? 0 : 1)).reduce((a, b) => a + b, 0);
+    return rank(x) - rank(y) || x.localeCompare(y);
+  });
+  sel.innerHTML = pairs.map(k => {
+    const [a, b] = k.split("|");
+    return '<option value="' + esc(k) + '">' + esc(a === b ? label(a) + " vs itself" : label(a) + " vs " + label(b)) + "</option>";
+  }).join("");
+
+  let current = null, step = 0, timer = null;
+
+  function flagsOf(m) {
+    const f = {};
+    for (const [seat, i, text] of m.f) f[seat + ":" + i] = text.replace("truncated", "cut off");
+    return f;
+  }
+
+  function miniStrip(m) {
+    return '<div class="mini" aria-hidden="true">' + m.m.map(s => "<div>" + [...s].map(c => '<i class="' + c + '"></i>').join("") + "</div>").join("") + "</div>";
+  }
+
+  function renderList(key) {
+    const list = byPair.get(key);
+    const el = document.getElementById("mlist");
+    el.innerHTML = list.map((m, i) =>
+      '<button type="button" role="listitem" data-id="' + esc(m.id) + '"' + (current && current.id === m.id ? ' aria-current="true"' : "") + ">" +
+      '<div class="meta"><span>Match ' + (i + 1) + " · " + m.m[0].length + " round" + (m.m[0].length === 1 ? "" : "s") + "</span><b>" + m.s[0] + "–" + m.s[1] + "</b></div>" +
+      miniStrip(m) + "</button>").join("");
+    el.querySelectorAll("button").forEach(b => b.addEventListener("click", () => showMatch(b.dataset.id, true)));
+  }
+
+  function payoffOf(x, y) { return {AA: [3, 3], AB: [0, 5], BA: [5, 0], BB: [1, 1]}[x + y]; }
+
+  function chart(m, upTo) {
+    const n = m.m[0].length, W = Math.max(300, document.getElementById("detail").clientWidth || 640), H = 170, pad = {l: 34, r: 10, t: 12, b: 22};
+    const tot = [[0], [0]];
+    for (let i = 0; i < n; i++) {
+      const p = payoffOf(m.m[0][i], m.m[1][i]);
+      tot[0].push(tot[0][i] + p[0]); tot[1].push(tot[1][i] + p[1]);
+    }
+    const maxY = Math.max(5, 3 * n, tot[0][n], tot[1][n]);
+    const x = i => pad.l + (W - pad.l - pad.r) * (n ? i / n : 0);
+    const y = v => H - pad.b - (H - pad.t - pad.b) * v / maxY;
+    const line = (s, color, dash) => '<polyline fill="none" stroke="' + color + '" stroke-width="2.5" stroke-linejoin="round"' + (dash ? ' stroke-dasharray="5 4"' : "") +
+      ' points="' + s.slice(0, upTo + 1).map((v, i) => x(i).toFixed(1) + "," + y(v).toFixed(1)).join(" ") + '"/>';
+    const ref = '<polyline fill="none" stroke="var(--line-strong)" stroke-width="1" stroke-dasharray="2 4" points="' + x(0) + "," + y(0) + " " + x(n) + "," + y(3 * n) + '"/>';
+    return '<div class="chart"><svg width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + " " + H + '" role="img" aria-label="Running score of both players">' +
+      '<line class="axis" x1="' + pad.l + '" x2="' + (W - pad.r) + '" y1="' + y(0) + '" y2="' + y(0) + '"/>' +
+      '<text x="' + (pad.l - 6) + '" y="' + (y(0) + 4) + '" text-anchor="end">0</text>' +
+      '<text x="' + (pad.l - 6) + '" y="' + (y(maxY) + 8) + '" text-anchor="end">' + maxY + "</text>" +
+      '<text x="' + (W - pad.r) + '" y="' + (H - 6) + '" text-anchor="end">round ' + n + "</text>" +
+      ref + line(tot[1], "var(--text-3)", true) + line(tot[0], "var(--text)", false) + "</svg>" +
+      '<div class="legend" style="margin-top:6px"><span><b>Running score:</b></span><span><svg width="22" height="8" class="swatch"><line x1="0" y1="4" x2="22" y2="4" stroke="var(--text)" stroke-width="2.5"/></svg>' + esc(label(m.p[0])) + "</span>" +
+      '<span><svg width="22" height="8" class="swatch"><line x1="0" y1="4" x2="22" y2="4" stroke="var(--text-3)" stroke-width="2.5" stroke-dasharray="5 4"/></svg>' + esc(m.p[0] === m.p[1] ? label(m.p[1]) + " (second seat)" : label(m.p[1])) + "</span>" +
+      '<span><svg width="22" height="8" class="swatch"><line x1="0" y1="4" x2="22" y2="4" stroke="var(--line-strong)" stroke-width="1.5" stroke-dasharray="2 4"/></svg>both always A (3 points a round)</span></div></div>';
+  }
+
+  function narrate(m, k) {
+    const n = m.m[0].length, a = label(m.p[0]), b = m.p[0] === m.p[1] ? label(m.p[1]) + " (second seat)" : label(m.p[1]);
+    if (k === 0) return "Before round 1. Press <b>Next</b> or the right arrow to play the match one round at a time.";
+    const i = k - 1, x = m.m[0][i], y = m.m[1][i], p = payoffOf(x, y);
+    let s0 = 0, s1 = 0;
+    for (let j = 0; j < k; j++) { const q = payoffOf(m.m[0][j], m.m[1][j]); s0 += q[0]; s1 += q[1]; }
+    const f = flagsOf(m);
+    const notes = [0, 1].map(seat => f[seat + ":" + i] ? " (" + (seat ? b : a) + ": " + f[seat + ":" + i] + ")" : "").join("");
+    return "<b>Round " + k + " of " + n + ":</b> " + esc(a) + " chose <b>" + x + "</b>, " + esc(b) + " chose <b>" + y + "</b>, scoring " + p[0] + " and " + p[1] + "." + esc(notes) +
+      " Totals: " + s0 + "–" + s1 + "." + (k === n ? " The match ended after this round." : "");
+  }
+
+  function renderDetail() {
+    const m = current, n = m.m[0].length, f = flagsOf(m);
+    const a = label(m.p[0]), b = m.p[0] === m.p[1] ? label(m.p[1]) + " (2)" : label(m.p[1]);
+    let s0 = 0, s1 = 0;
+    for (let j = 0; j < step; j++) { const q = payoffOf(m.m[0][j], m.m[1][j]); s0 += q[0]; s1 += q[1]; }
+    const cols = [];
+    for (let i = 0; i < n; i++) {
+      const cls = i + 1 === step ? "col now" : i >= step ? "col future" : "col";
+      const cell = seat => {
+        const fl = f[seat + ":" + i];
+        return '<span class="mv ' + m.m[seat][i] + '"' + (fl ? ' data-flag="' + esc(fl) + '" title="' + esc(fl) + '"' : "") + ">" + m.m[seat][i] + "</span>";
+      };
+      cols.push('<div class="' + cls + '" data-k="' + (i + 1) + '"><span class="n">' + (i + 1) + "</span>" + cell(0) + cell(1) + "</div>");
+    }
+    const hasFlags = m.f.length > 0;
+    document.getElementById("detail").innerHTML =
+      '<div class="dhead"><div class="score">' + esc(a) + " " + s0 + '<span class="vs">–</span>' + s1 + " " + esc(b) + "</div>" +
+      '<div class="controls"><button type="button" data-go="first" aria-label="Before round 1">⏮</button>' +
+      '<button type="button" data-go="prev" aria-label="Previous round">◀</button>' +
+      '<button type="button" data-go="play" aria-label="' + (timer ? "Pause" : "Play") + '">' + (timer ? "Pause" : "Play") + "</button>" +
+      '<button type="button" data-go="next" aria-label="Next round">Next ▶</button>' +
+      '<button type="button" data-go="last" aria-label="Show the whole match">⏭</button></div></div>' +
+      '<div class="rounds"><div class="names"><span></span><span>' + esc(short(m.p[0])) + "</span><span>" + esc(m.p[0] === m.p[1] ? short(m.p[1]) + " (2)" : short(m.p[1])) + "</span></div>" +
+      '<div class="cols">' + cols.join("") + "</div></div>" +
+      '<p class="narrate">' + narrate(m, step) + "</p>" +
+      chart(m, step) +
+      (hasFlags ? '<div class="legend"><span><span class="swatch" style="display:inline-block;width:9px;height:9px;border-radius:50%;background:#f5b400"></span>A dot marks a round where the model needed a retry, forfeited, or was cut off.</span></div>' : "") +
+      '<p class="share">Match <code>' + esc(m.id) + '</code> · <a href="#match=' + encodeURIComponent(m.id) + '">link to this match</a></p>';
+    const d = document.getElementById("detail");
+    d.querySelectorAll("[data-go]").forEach(btn => btn.addEventListener("click", () => go(btn.dataset.go)));
+    d.querySelectorAll(".col").forEach(c => c.addEventListener("click", () => { stop(); step = +c.dataset.k; renderDetail(); }));
+    d.querySelector('[data-go="first"]').disabled = d.querySelector('[data-go="prev"]').disabled = step === 0;
+    d.querySelector('[data-go="next"]').disabled = d.querySelector('[data-go="last"]').disabled = step === n;
+  }
+
+  function stop() { if (timer) { clearInterval(timer); timer = null; } }
+  function go(what) {
+    const n = current.m[0].length;
+    if (what === "play") {
+      if (timer) { stop(); renderDetail(); return; }
+      if (step >= n) step = 0;
+      timer = setInterval(() => { step++; if (step >= n) stop(); renderDetail(); }, 550);
+      step = Math.min(step + 1, n);
+    } else {
+      stop();
+      step = what === "first" ? 0 : what === "last" ? n : what === "prev" ? Math.max(0, step - 1) : Math.min(n, step + 1);
+    }
+    renderDetail();
+  }
+
+  function showMatch(id, fromList) {
+    stop();
+    current = MATCH[id];
+    step = current.m[0].length;
+    const key = current.p[0] + "|" + current.p[1];
+    sel.value = key;
+    renderList(key);
+    renderDetail();
+    if (fromList) history.replaceState(null, "", "#match=" + encodeURIComponent(id));
+  }
+
+  function selectPairing(r, c) {
+    const key = byPair.has(r + "|" + c) ? r + "|" + c : c + "|" + r;
+    if (!byPair.has(key)) return;
+    showMatch(byPair.get(key)[0].id, true);
+  }
+
+  sel.addEventListener("change", () => showMatch(byPair.get(sel.value)[0].id, true));
+  let resizeTimer = null, lastWidth = innerWidth;
+  addEventListener("resize", () => {
+    if (innerWidth === lastWidth) return;
+    lastWidth = innerWidth;
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(() => current && renderDetail(), 150);
+  });
+  document.addEventListener("keydown", e => {
+    if (!current || e.target.closest("select, input, textarea")) return;
+    const v = document.getElementById("viewer").getBoundingClientRect();
+    if (v.bottom < 0 || v.top > innerHeight) return;
+    if (e.key === "ArrowRight") { go("next"); e.preventDefault(); }
+    if (e.key === "ArrowLeft") { go("prev"); e.preventDefault(); }
+  });
+
+  function matchFromHash() {
+    const id = decodeURIComponent((location.hash.match(/match=([^&]+)/) || [])[1] || "");
+    return MATCH[id] ? id : null;
+  }
+  const fromHash = matchFromHash();
+  showMatch(fromHash || DATA.featured, false);
+  if (fromHash) document.getElementById("viewer").scrollIntoView();
+  addEventListener("hashchange", () => {
+    const id = matchFromHash();
+    if (id && (!current || current.id !== id)) { showMatch(id, false); document.getElementById("viewer").scrollIntoView(); }
+  });
+
+  // ---------- notes and footer ----------
+  document.getElementById("notes-body").innerHTML = DATA.notes_html;
+  if (!DATA.notes_html) document.getElementById("notes").hidden = true;
+  document.getElementById("footer-text").innerHTML =
+    "Generated from <a href=\"" + DATA.repo + "/tree/main/" + esc(run.path) + "\"><code>" + esc(run.path) + "</code></a>. " +
+    "CI replays that run from its recorded model calls on every push and fails if any match differs, so this page cannot drift from the data. " +
+    "Settings: temperature " + run.temperature + ", " + Math.round(run.end_probability * 100) + "% chance the game ends after each round, tournament seed " + run.seed + ". " +
+    "<a href=\"" + DATA.repo + "\">Code, design notes and raw data</a>.";
+})();
+</script>
+</body>
+</html>
