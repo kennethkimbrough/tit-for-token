@@ -1,0 +1,4 @@
+m3-named-dry-run: 0 of 25 matches already done, 25 to play
+  25/25 matches played, $0.2175 spent
+completed: 25/25 matches, 371 live calls, $0.2175 spent
+results: python -m tit_for_token report run
