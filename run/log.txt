@@ -1,0 +1,19 @@
+m1-small-models: 0 of 400 matches already done, 400 to play
+  25/400 matches played, $0.0000 spent
+  50/400 matches played, $0.0275 spent
+  75/400 matches played, $0.1087 spent
+  100/400 matches played, $0.1558 spent
+  125/400 matches played, $0.3797 spent
+  150/400 matches played, $0.4530 spent
+  175/400 matches played, $0.5166 spent
+  200/400 matches played, $0.6804 spent
+  225/400 matches played, $0.7927 spent
+  250/400 matches played, $0.9889 spent
+  275/400 matches played, $1.2285 spent
+  300/400 matches played, $1.3947 spent
+  325/400 matches played, $1.7419 spent
+  350/400 matches played, $1.9980 spent
+  375/400 matches played, $2.3420 spent
+  400/400 matches played, $2.6588 spent
+completed: 400/400 matches, 3693 live calls, $2.6588 spent
+results: python -m tit_for_token report run
