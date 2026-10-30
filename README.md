@@ -14,10 +14,10 @@ with a sortable leaderboard, every pairing as a heatmap, and a viewer that
 steps through any of the 400 recorded matches round by round. It is built from
 the committed run on every push.
 
-**Status:** milestones 1 and 2 are complete: the tournament harness, one
-committed tournament between four small models, and the results site. Next is
-a test of how the game's framing changes behaviour (milestone 3). See
-[DESIGN.md](DESIGN.md).
+**Status:** milestones 1 and 2 are complete (the tournament harness, one
+committed tournament between four small models, and the results site), and so
+is the framing experiment from milestone 3. Next is cheap talk: letting
+players send a message before each move. See [DESIGN.md](DESIGN.md).
 
 ## Results: milestone 1
 
@@ -85,6 +85,37 @@ Conditions, which the results depend on:
 
 The run took 21 minutes on a GitHub Actions runner.
 
+## Results: does naming the game change behaviour?
+
+Milestone 1 never names the game: the options are A and B. A model that is
+told "this is the prisoner's dilemma, A is cooperate, B is defect" might fall
+back on what it has read about the game instead. To test that,
+[`runs/m3-named`](runs/m3-named) replays 250 of milestone 1's matches with
+that one change to the prompt. Each match has the same id, seed and length in
+both runs, so the comparison is match by match, with paired bootstrap
+intervals ([`comparison.md`](runs/m3-named/comparison.md)).
+
+| Model | Cooperates (A/B → named) | Retaliates | Forgives |
+|---|---|---|---|
+| Claude Haiku 5.5 | 83% → 86% (+3 [-3 to +10]) | 100% → 100% | 0% → 1% (+1 [+0 to +3]) |
+| DeepSeek V4.1 Flash | 81% → 83% (+2 [+0 to +5]) | 99% → 100% (+1 [+0 to +6]) | 4% → 0% (**-4** [-22 to -1]) |
+| GPT-5 mini | 71% → 73% (+1 [-9 to +12]) | 96% → 97% (+1 [-4 to +5]) | 6% → 2% (-4 [-9 to +1]) |
+| Gemini 2.5 Flash | 55% → 65% (+10 [-7 to +26]) | 95% → 99% (**+5** [+2 to +8]) | 2% → 0% (**-2** [-5 to -0]) |
+
+*Changes are in percentage points with 95% paired intervals. The first
+numbers differ from the milestone 1 table because only the shared matches
+count.*
+
+- **Naming the game did not measurably change how often any model
+  cooperated.** Every cooperation interval includes zero; Gemini moved the
+  most, but its interval runs from -7 to +26 points.
+- **It made the models less forgiving.** Gemini retaliated more consistently
+  and, like DeepSeek, stopped going back to cooperating after retaliating.
+  These are small changes to behaviour that was already rare.
+- At 70 matches per model, a real cooperation effect smaller than about 10
+  points would not show up. The two arms were run hours apart on the same
+  day; [`notes.md`](runs/m3-named/notes.md) lists the conditions.
+
 ## How it works
 
 Each match is an iterated prisoner's dilemma. Both players choose at the same
@@ -133,13 +164,14 @@ Python 3.11+, no runtime dependencies.
 
 ```sh
 pip install -e ".[dev]"
-pytest                                   # 48 tests, no network
+pytest                                   # 52 tests, no network
 
 export OPENROUTER_API_KEY=...            # never goes in a file
 python -m tit_for_token run configs/m1-small-models.toml
 python -m tit_for_token report runs/m1-small-models
 python -m tit_for_token check  runs/m1-small-models    # replay from the recording and compare
 python -m tit_for_token site   runs/m1-small-models --out site   # build the results site into site/
+python -m tit_for_token compare runs/m1-small-models runs/m3-named  # paired comparison of two runs
 ```
 
 A run directory holds the config it was made with, `calls.jsonl` (the

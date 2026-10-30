@@ -170,8 +170,11 @@ the intervals say so.
   through any recorded match round by round. One self-contained page,
   generated from the committed run by the same analysis code as the report,
   and published by CI only after the run replays exactly.
-- **3:** cheap talk (players may send one short message before each move) and
-  the framing experiment (neutral labels vs. named game).
+- **3:** the framing experiment (done): `framing = "named"` names the game
+  and labels the options, with every other word of the prompt unchanged, and
+  `runs/m3-named` replays 250 of milestone 1's matches under it so the two
+  runs compare match by match with paired bootstrap intervals. Still to do:
+  cheap talk (players may send one short message before each move).
 - **4:** a second game: the ultimatum game or a public-goods game.
 - **Later:** larger frontier models on a sampled subset; a negotiation game.
 
