@@ -14,6 +14,10 @@ on:
         description: "Tournament config"
         required: true
         default: "configs/m1-dry-run.toml"
+      resume_from:
+        description: "Optional results branch to resume (its matches are kept and its recorded calls are reused for free)"
+        required: false
+        default: ""
 
 permissions:
   contents: write
@@ -28,6 +32,16 @@ jobs:
         with:
           python-version: "3.12"
       - run: pip install -e .
+      - name: Restore an earlier run to resume
+        if: inputs.resume_from != ''
+        env:
+          RESUME_FROM: ${{ inputs.resume_from }}
+        run: |
+          git fetch -q --depth 1 origin "$RESUME_FROM"
+          git checkout FETCH_HEAD -- run
+          git reset -q
+          rm -f run/report.md run/log.txt
+          wc -l run/matches.jsonl run/calls.jsonl || true
       - name: Play the tournament
         timeout-minutes: 120
         env:
