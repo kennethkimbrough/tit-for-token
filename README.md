@@ -83,8 +83,7 @@ Conditions, which the results depend on:
   threshold, but it slightly lowers DeepSeek's cooperation figure.
 - 90 matches per model. Differences inside the intervals are not findings.
 
-The run took 21 minutes on a GitHub Actions runner and cost about $2.66 at
-OpenRouter's listed prices.
+The run took 21 minutes on a GitHub Actions runner.
 
 ## How it works
 

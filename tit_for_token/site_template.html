@@ -297,7 +297,6 @@ footer p { max-width: 75ch; }
     ["<b>" + run.rounds.toLocaleString() + "</b> rounds"],
     run.model_calls ? ["<b>" + run.model_calls.toLocaleString() + "</b> recorded model calls"] : null,
     ["<b>" + run.matches_per_pairing + "</b> matches per pairing"],
-    run.spent_usd ? ["about <b>$" + run.spent_usd.toFixed(2) + "</b> of API calls"] : null,
   ].filter(Boolean);
   document.getElementById("chips").innerHTML = chips.map(c => '<span class="chip">' + c[0] + "</span>").join("");
 

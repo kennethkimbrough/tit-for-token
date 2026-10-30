@@ -195,7 +195,6 @@ def site_data(run_dir: Path, reps: int = 2000, featured: str | None = None) -> d
             "matches": len(matches),
             "rounds": sum(len(m.rounds) for m in matches),
             "model_calls": run_info.get("recorded_calls"),
-            "spent_usd": run_info.get("spent_usd"),
             "matches_per_pairing": config.matches_per_pairing,
             "end_probability": config.rules.end_probability,
             "temperature": config.temperature,
