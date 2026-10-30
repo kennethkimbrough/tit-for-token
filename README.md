@@ -9,11 +9,77 @@ bots, records every model call so any tournament can be replayed exactly and
 for free, and reports cooperation, retaliation, forgiveness and exploitation
 with bootstrap confidence intervals.
 
-**Status:** the engine, bots, model adapter, recorder, runner, analysis and
-command line are built and tested (no network in the tests). **No tournament
-has been run against real models yet**, so there are no results to report.
-Results will appear here only when they come from a run committed under
-`runs/`, where CI replays it from its recording on every push.
+**Status:** milestone 1 is complete: the tournament harness and one
+committed tournament between four small models. Next is a results site with
+a match viewer (milestone 2), then a test of how the game's framing changes
+behaviour (milestone 3). See [DESIGN.md](DESIGN.md).
+
+## Results: milestone 1
+
+Four small models from different labs and five classic bots, 400 matches
+(3,772 rounds), from [`runs/m1-small-models`](runs/m1-small-models). Every
+number below comes from that run, and CI replays it from its recording
+(3,693 model calls) on every push. Brackets are 95% bootstrap intervals over
+matches; the full report, with pairwise tables, is
+[`runs/m1-small-models/report.md`](runs/m1-small-models/report.md).
+
+| Player | Payoff per round | Cooperates | Retaliates | Forgives | vs Always Cooperate |
+|---|---|---|---|---|---|
+| Claude Haiku 5.5 | **2.65** [2.45–2.80] | 81% [71–89] | 99% [98–100] | 1% [0–2] | 3.00 [3.00–3.00] |
+| DeepSeek V4.1 Flash | **2.63** [2.34–2.87] | 77% [62–91] | 98% [94–100] | 5% [2–16] | 3.00 [3.00–3.00] |
+| Tit-for-Tat | 2.45 [2.19–2.71] | 75% [63–88] | 100% | 11% [4–28] | 3.00 |
+| GPT-5 mini | 2.43 [2.19–2.64] | 69% [57–79] | 91% [86–95] | 10% [5–17] | 3.10 [3.00–3.25] |
+| Grim Trigger | 2.42 [2.19–2.65] | 65% [52–79] | 100% | 0% | 3.00 |
+| Always Cooperate | 2.32 [2.00–2.61] | 100% | 0% | – | – |
+| Gemini 2.5 Flash | 2.27 [2.00–2.53] | **49%** [37–62] | 95% [93–97] | 4% [2–7] | **3.39** [3.00–4.00] |
+| Always Defect | 1.89 [1.59–2.28] | 0% | 100% | 0% | 5.00 |
+| Random | 1.86 [1.53–2.21] | 49% [45–53] | 53% [48–58] | 46% [39–53] | 4.06 [3.94–4.25] |
+
+*Retaliates: plays B in the round after the opponent played B. Forgives:
+plays A in the round after retaliating. vs Always Cooperate: payoff per round
+against an unconditional cooperator, where 3 means cooperating with it and 5
+means exploiting it fully.*
+
+What the run shows, stated no more strongly than the intervals allow:
+
+- **Haiku and DeepSeek play almost exactly like Grim Trigger.** They open
+  with A, answer a betrayal with B 98–99% of the time, and almost never go
+  back to A. Haiku's move matches Grim Trigger's rule in 99% of rounds
+  [97–100]. That style earned the most per round in this field, though the
+  top four players' intervals overlap.
+- **Gemini Flash is the clear outlier on cooperation.** It chose A in 49% of
+  its rounds against Haiku's 81%, and those intervals do not overlap. It also
+  has the highest payoff of any model against an unconditional cooperator
+  (3.39) and the lowest payoff per round of the four models (2.27), but both
+  of those intervals overlap the other models', so they are leads to test
+  with more matches, not findings. Gemini and Haiku cooperated in only 40%
+  [11–80] of the rounds they played against each other.
+- **GPT-5 mini forgives more often than Haiku** (10% [5–17] against 1%
+  [0–2]) and retaliates less consistently (91% [86–95] against 99%
+  [98–100]).
+- **Against themselves,** Haiku and DeepSeek cooperated in every round;
+  Gemini managed 60% [17–90].
+
+Conditions, which the results depend on:
+
+- One framing of the game: neutral A/B labels, the payoff table, a 10%
+  chance of ending after each round, simultaneous moves. A different framing
+  could change behaviour; that is milestone 3.
+- Temperature 0.7, and every model asked for **low reasoning effort**. The
+  same request does not produce the same amount of thinking: per call,
+  Haiku reasoned for about 13 tokens, GPT-5 mini 234, Gemini 359 and
+  DeepSeek 734 (from [`run.json`](runs/m1-small-models/run.json)).
+- This field of opponents. In a round-robin, payoff rankings depend on who
+  else is playing, so they describe this tournament, not the models in
+  general. Cooperation, retaliation and forgiveness are less sensitive to
+  the field than payoff is.
+- DeepSeek forfeited 1% of its rounds (an answer still cut off at a
+  4,000-token cap), recorded as B. That is under the report's 2% validity
+  threshold, but it slightly lowers DeepSeek's cooperation figure.
+- 90 matches per model. Differences inside the intervals are not findings.
+
+The run took 21 minutes on a GitHub Actions runner and cost about $2.66 at
+OpenRouter's listed prices.
 
 ## How it works
 
@@ -63,7 +129,7 @@ Python 3.11+, no runtime dependencies.
 
 ```sh
 pip install -e ".[dev]"
-pytest                                   # 41 tests, no network
+pytest                                   # 44 tests, no network
 
 export OPENROUTER_API_KEY=...            # never goes in a file
 python -m tit_for_token run configs/m1-small-models.toml
