@@ -165,8 +165,11 @@ the intervals say so.
 
 ## Later milestones
 
-- **2:** static results site on GitHub Pages: leaderboard, per-pair tables,
-  and a match viewer that steps through any recorded match round by round.
+- **2 (done):** static results site on GitHub Pages: leaderboard with
+  intervals, every pairing as a heatmap, and a match viewer that steps
+  through any recorded match round by round. One self-contained page,
+  generated from the committed run by the same analysis code as the report,
+  and published by CI only after the run replays exactly.
 - **3:** cheap talk (players may send one short message before each move) and
   the framing experiment (neutral labels vs. named game).
 - **4:** a second game: the ultimatum game or a public-goods game.

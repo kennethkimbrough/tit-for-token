@@ -9,10 +9,15 @@ bots, records every model call so any tournament can be replayed exactly and
 for free, and reports cooperation, retaliation, forgiveness and exploitation
 with bootstrap confidence intervals.
 
-**Status:** milestone 1 is complete: the tournament harness and one
-committed tournament between four small models. Next is a results site with
-a match viewer (milestone 2), then a test of how the game's framing changes
-behaviour (milestone 3). See [DESIGN.md](DESIGN.md).
+**Results site: [kennethkimbrough.github.io/tit-for-token](https://kennethkimbrough.github.io/tit-for-token/)**,
+with a sortable leaderboard, every pairing as a heatmap, and a viewer that
+steps through any of the 400 recorded matches round by round. It is built from
+the committed run on every push.
+
+**Status:** milestones 1 and 2 are complete: the tournament harness, one
+committed tournament between four small models, and the results site. Next is
+a test of how the game's framing changes behaviour (milestone 3). See
+[DESIGN.md](DESIGN.md).
 
 ## Results: milestone 1
 
@@ -129,12 +134,13 @@ Python 3.11+, no runtime dependencies.
 
 ```sh
 pip install -e ".[dev]"
-pytest                                   # 44 tests, no network
+pytest                                   # 48 tests, no network
 
 export OPENROUTER_API_KEY=...            # never goes in a file
 python -m tit_for_token run configs/m1-small-models.toml
 python -m tit_for_token report runs/m1-small-models
 python -m tit_for_token check  runs/m1-small-models    # replay from the recording and compare
+python -m tit_for_token site   runs/m1-small-models --out site   # build the results site into site/
 ```
 
 A run directory holds the config it was made with, `calls.jsonl` (the
@@ -162,7 +168,9 @@ tit_for_token/
   config.py          TOML tournament config
   runner.py          round-robin scheduling, resume, output files
   analysis.py        metrics, bootstrap intervals, Markdown report
-  cli.py             run / report / check
+  site.py            results site: run data -> one self-contained index.html
+  site_template.html the page itself (no framework, no build step)
+  cli.py             run / report / check / site
 tests/               pytest, with a fake model transport; no network
 configs/             tournament configurations
 runs/                committed tournaments (recording + matches), replayed in CI
