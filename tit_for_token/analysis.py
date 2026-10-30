@@ -280,3 +280,128 @@ def markdown_report(matches: list[MatchRecord], reps: int = 1000) -> str:
             cells.append("–" if v != v else f"{v:.2f}")
         lines.append(f"| {row} | " + " | ".join(cells) + " |")
     return "\n".join(lines) + "\n"
+
+
+# ---- comparing two runs of the same matches (the framing experiment) ----
+
+BOT_NAMES = frozenset({"always-cooperate", "always-defect", "tit-for-tat", "grim-trigger", "random"})
+
+
+@dataclass(frozen=True)
+class Change:
+    """A statistic in two runs over the same matches, and the paired difference (second minus first)."""
+
+    first: Estimate
+    second: Estimate
+    diff: Estimate
+
+
+def paired_change(stat: Stat, first: list, second: list, reps: int = 1000, seed: int = 0, level: float = 0.95) -> Change:
+    """``first[i]`` and ``second[i]`` are the same match in two runs; resample match indices for both together.
+
+    Because the two runs share match ids, seeds and lengths, the difference is
+    computed within each resample, which gives a tighter and more honest
+    interval than comparing two independent intervals.
+    """
+    if len(first) != len(second):
+        raise ValueError("paired groups must have the same length")
+    a, b = pooled(stat, first), pooled(stat, second)
+    n = len(first)
+    if not n or a != a or b != b:
+        nan = float("nan")
+        return Change(estimate(stat, first, reps, seed), estimate(stat, second, reps, seed), Estimate(nan, nan, nan, n))
+    rng = random.Random(seed)
+    diffs = []
+    for _ in range(reps):
+        idx = [rng.randrange(n) for _ in range(n)]
+        da = pooled(stat, [first[i] for i in idx])
+        db = pooled(stat, [second[i] for i in idx])
+        if da == da and db == db:
+            diffs.append(db - da)
+    diffs.sort()
+    lo = diffs[int((1 - level) / 2 * (len(diffs) - 1))] if diffs else b - a
+    hi = diffs[int((1 + level) / 2 * (len(diffs) - 1))] if diffs else b - a
+    return Change(estimate(stat, first, reps, seed), estimate(stat, second, reps, seed), Estimate(b - a, lo, hi, n))
+
+
+@dataclass
+class FramingComparison:
+    player: str
+    matches: int
+    cooperation: Change
+    cooperation_vs_models: Change
+    retaliation: Change
+    forgiveness: Change
+    vs_always_cooperate: Change
+    payoff: Change
+
+
+def compare_runs(first: list[MatchRecord], second: list[MatchRecord], reps: int = 1000) -> list[FramingComparison]:
+    """Per model, each statistic in both runs over the matches the runs share, with paired intervals.
+
+    Only players that are not classic bots are compared (a bot plays the same
+    whatever the framing), and only match ids present in both runs count.
+    """
+    by_id_a = {m.match_id: m for m in first}
+    by_id_b = {m.match_id: m for m in second}
+    shared = sorted(set(by_id_a) & set(by_id_b))
+    for mid in shared:
+        if len(by_id_a[mid].rounds) != len(by_id_b[mid].rounds):
+            raise ValueError(f"match {mid} has a different length in the two runs; they are not the same matches")
+
+    def units(matches: dict[str, MatchRecord], player: str, keep=lambda s: True) -> list[list[Side]]:
+        out = []
+        for mid in shared:
+            unit = [s for s in sides([matches[mid]]) if s.player == player and keep(s)]
+            if unit:
+                out.append(unit)
+        return out
+
+    players = sorted({p for mid in shared for p in by_id_a[mid].players} - BOT_NAMES)
+    result = []
+    for p in players:
+        ua, ub = units(by_id_a, p), units(by_id_b, p)
+        not_bot = lambda s: s.opponent not in BOT_NAMES  # noqa: E731
+        ac = lambda s: s.opponent == "always-cooperate"  # noqa: E731
+        result.append(
+            FramingComparison(
+                player=p,
+                matches=len(ua),
+                cooperation=paired_change(cooperation, ua, ub, reps),
+                cooperation_vs_models=paired_change(cooperation, units(by_id_a, p, not_bot), units(by_id_b, p, not_bot), reps),
+                retaliation=paired_change(retaliation, ua, ub, reps),
+                forgiveness=paired_change(forgiveness, ua, ub, reps),
+                vs_always_cooperate=paired_change(payoff, units(by_id_a, p, ac), units(by_id_b, p, ac), reps),
+                payoff=paired_change(payoff, ua, ub, reps),
+            )
+        )
+    return result
+
+
+def _fmt_change(c: Change, pct: bool) -> str:
+    if c.diff.n_matches == 0 or c.diff.value != c.diff.value:
+        return "–"
+    if pct:
+        return (f"{100 * c.first.value:.0f}% → {100 * c.second.value:.0f}% "
+                f"({100 * c.diff.value:+.0f} pts [{100 * c.diff.low:+.0f} to {100 * c.diff.high:+.0f}])")
+    return f"{c.first.value:.2f} → {c.second.value:.2f} ({c.diff.value:+.2f} [{c.diff.low:+.2f} to {c.diff.high:+.2f}])"
+
+
+def markdown_comparison(first: list[MatchRecord], second: list[MatchRecord], first_name: str, second_name: str,
+                        reps: int = 1000) -> str:
+    rows = compare_runs(first, second, reps)
+    shared = len({m.match_id for m in first} & {m.match_id for m in second})
+    lines = [
+        f"{first_name} → {second_name}, over the {shared} matches the two runs share (same ids, seeds and lengths). "
+        "Brackets are 95% paired bootstrap intervals for the change, resampling matches. "
+        "A change whose interval excludes zero is a finding; one that includes zero is not.\n",
+        "| Model | Matches | Cooperation | Cooperation vs models | Retaliation | Forgiveness | vs Always Cooperate | Payoff/round |",
+        "|---|---|---|---|---|---|---|---|",
+    ]
+    for r in rows:
+        lines.append(
+            f"| {r.player} | {r.matches} | {_fmt_change(r.cooperation, True)} | {_fmt_change(r.cooperation_vs_models, True)} | "
+            f"{_fmt_change(r.retaliation, True)} | {_fmt_change(r.forgiveness, True)} | "
+            f"{_fmt_change(r.vs_always_cooperate, False)} | {_fmt_change(r.payoff, False)} |"
+        )
+    return "\n".join(lines) + "\n"

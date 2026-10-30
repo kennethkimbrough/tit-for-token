@@ -4,6 +4,7 @@
     python -m tit_for_token report DIR [--reps N]
     python -m tit_for_token check DIR          replay DIR's config against its recording and compare
     python -m tit_for_token site DIR [--out site] [--featured MATCH_ID]   build the results site
+    python -m tit_for_token compare DIR_A DIR_B   paired comparison over the matches two runs share
 
 ``run`` plays (or resumes) a tournament. Without ``--replay`` it makes live
 calls through OpenRouter, reusing any calls already in the recording; with
@@ -19,7 +20,7 @@ import sys
 import tempfile
 from pathlib import Path
 
-from .analysis import markdown_report
+from .analysis import markdown_comparison, markdown_report
 from .config import load_config
 from .runner import copy_config, load_matches, run_tournament
 
@@ -65,6 +66,17 @@ def cmd_check(args: argparse.Namespace) -> int:
         return 1
 
 
+def cmd_compare(args: argparse.Namespace) -> int:
+    first = load_matches(Path(args.first) / "matches.jsonl")
+    second = load_matches(Path(args.second) / "matches.jsonl")
+    if not set(first) & set(second):
+        print(f"{args.first} and {args.second} share no matches", file=sys.stderr)
+        return 1
+    print(markdown_comparison(list(first.values()), list(second.values()),
+                              Path(args.first).name, Path(args.second).name, reps=args.reps), end="")
+    return 0
+
+
 def cmd_site(args: argparse.Namespace) -> int:
     from .site import build_site
 
@@ -92,6 +104,12 @@ def main(argv: list[str] | None = None) -> int:
     check = sub.add_parser("check", help="verify a run replays exactly from its recording")
     check.add_argument("dir")
     check.set_defaults(func=cmd_check)
+
+    compare = sub.add_parser("compare", help="compare two runs over the matches they share")
+    compare.add_argument("first")
+    compare.add_argument("second")
+    compare.add_argument("--reps", type=int, default=2000, help="bootstrap resamples")
+    compare.set_defaults(func=cmd_compare)
 
     site = sub.add_parser("site", help="build the static results site for a run")
     site.add_argument("dir")

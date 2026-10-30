@@ -107,3 +107,26 @@ def test_forfeit_warning_names_the_cause():
     (warning,) = validity_warnings([fake])
     assert "cut off at max_tokens" in warning and "not valid" in warning
     assert 0.1 > FORFEIT_WARNING_RATE
+
+
+def test_paired_comparison_finds_a_shift_and_ignores_bots():
+    from tit_for_token.analysis import compare_runs, markdown_comparison
+    from tit_for_token.engine import MatchRecord, Round
+
+    def match(mid, players, moves):
+        return MatchRecord(mid, players, 1, len(moves), [Round(m) for m in moves])
+
+    ids = [f"m--always-defect--{i:03d}" for i in range(30)]
+    neutral = [match(mid, ("m", "always-defect"), [("A", "B"), ("A", "B")]) for mid in ids]
+    named = [match(mid, ("m", "always-defect"), [("A", "B"), ("B", "B")]) for mid in ids]
+    rows = compare_runs(neutral, named, reps=200)
+    assert [r.player for r in rows] == ["m"]  # bots are never compared
+    r = rows[0]
+    assert r.cooperation.first.value == 1.0 and r.cooperation.second.value == 0.5
+    assert r.cooperation.diff.value == -0.5 and r.cooperation.diff.low == r.cooperation.diff.high == -0.5
+    assert "100% → 50% (-50 pts" in markdown_comparison(neutral, named, "neutral", "named", reps=200)
+    # Matches only one run has are left out; matches whose length differs are refused.
+    assert compare_runs(neutral + [match("x--y--000", ("x", "y"), [("A", "A")])], named, reps=50)[0].matches == 30
+    import pytest
+    with pytest.raises(ValueError):
+        compare_runs(neutral, [match(ids[0], ("m", "always-defect"), [("A", "B")])] + named[1:], reps=50)
