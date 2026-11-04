@@ -22,10 +22,14 @@
   --a-ink: #0b7a6b;
   --b: #d9472f;
   --b-ink: #b33a25;
-  --heat-lo: #f2c4b9;
-  --heat-mid: #f1f0ea;
-  --heat-hi: #b6e2d9;
-  --band: rgba(20, 23, 28, 0.22);
+  --heat-lo: #ec9a88;
+  --heat-mid: #f1efe6;
+  --heat-hi: #74cbb9;
+  --band: rgba(20, 23, 28, 0.2);
+  --m1: #3a66d4;
+  --m2: #c47f0e;
+  --m3: #8a4fe0;
+  --m4: #cf3f86;
   --tick: #14171c;
   --focus: #0f9d8a;
   --shadow: 0 1px 2px rgba(20, 23, 28, 0.05), 0 8px 28px rgba(20, 23, 28, 0.06);
@@ -45,10 +49,14 @@
     --a-ink: #5fd4c2;
     --b: #ec6a52;
     --b-ink: #f08a76;
-    --heat-lo: #5a2c25;
+    --heat-lo: #7a3427;
     --heat-mid: #22272e;
-    --heat-hi: #1f5249;
+    --heat-hi: #1d6b5c;
     --band: rgba(238, 240, 242, 0.25);
+    --m1: #7d9cf0;
+    --m2: #e8a93e;
+    --m3: #b28cf5;
+    --m4: #ef7bb3;
     --tick: #eef0f2;
     --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 8px 28px rgba(0, 0, 0, 0.25);
     color-scheme: dark;
@@ -57,7 +65,8 @@
 :root[data-theme="dark"] {
   --bg: #101317; --surface: #171b21; --surface-2: #1d2229; --line: #2a3038; --line-strong: #39414b;
   --text: #eef0f2; --text-2: #c3c8cf; --text-3: #8d949e; --a: #2fbfaa; --a-ink: #5fd4c2; --b: #ec6a52; --b-ink: #f08a76;
-  --heat-lo: #5a2c25; --heat-mid: #22272e; --heat-hi: #1f5249; --band: rgba(238, 240, 242, 0.25); --tick: #eef0f2;
+  --heat-lo: #7a3427; --heat-mid: #22272e; --heat-hi: #1d6b5c; --band: rgba(238, 240, 242, 0.25); --tick: #eef0f2;
+  --m1: #7d9cf0; --m2: #e8a93e; --m3: #b28cf5; --m4: #ef7bb3;
   --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 8px 28px rgba(0, 0, 0, 0.25); color-scheme: dark;
 }
 
@@ -91,6 +100,20 @@ section { margin: 0 0 28px; }
 @media (max-width: 640px) { .card { padding: 18px 14px; border-radius: 14px; } }
 h2 { font-size: 22px; letter-spacing: -0.3px; margin: 0 0 6px; }
 .sub { color: var(--text-3); font-size: 14.5px; margin: 0 0 18px; max-width: 75ch; }
+
+/* Headline findings */
+.headlines { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; margin: 0 0 28px; }
+.hl { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; box-shadow: var(--shadow); padding: 20px 20px 18px; position: relative; overflow: hidden; }
+.hl::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 5px; background: var(--c, var(--a)); }
+.hl .big { font-size: 44px; font-weight: 800; letter-spacing: -1.5px; line-height: 1; color: var(--c, var(--text)); }
+.hl .big small { font-size: 18px; letter-spacing: 0; font-weight: 700; color: var(--text-3); margin-left: 4px; }
+.hl .what { font-weight: 700; margin: 10px 0 4px; line-height: 1.3; }
+.hl .more { font-size: 13.5px; color: var(--text-3); line-height: 1.45; }
+.hl a { font-size: 13.5px; font-weight: 600; display: inline-block; margin-top: 8px; }
+
+/* Model colours */
+.dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: var(--c, var(--line-strong)); margin-right: 8px; vertical-align: 0; flex: none; }
+.dot.bot { background: transparent; border: 2px solid var(--line-strong); width: 10px; height: 10px; }
 
 /* The game */
 .game { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 28px; align-items: center; }
@@ -127,18 +150,38 @@ table.board tr.bot .who b { font-weight: 600; color: var(--text-2); }
 .metric { min-width: 120px; white-space: nowrap; }
 .metric .num { font-weight: 700; font-size: 15px; }
 .metric .ci { font-size: 12px; color: var(--text-3); margin-left: 4px; }
-.track { position: relative; height: 8px; border-radius: 4px; background: var(--surface-2); border: 1px solid var(--line); margin-top: 6px; }
-.track .band { position: absolute; top: 1px; bottom: 1px; border-radius: 3px; background: var(--band); }
-.track .tick { position: absolute; top: -3px; width: 3px; height: 12px; margin-left: -1.5px; border-radius: 2px; background: var(--tick); }
+.track { position: relative; height: 10px; border-radius: 5px; background: var(--surface-2); border: 1px solid var(--line); margin-top: 7px; }
+.track .band { position: absolute; top: 1px; bottom: 1px; border-radius: 4px; background: var(--band); }
+.track .tick { position: absolute; top: -4px; width: 4px; height: 16px; margin-left: -2px; border-radius: 2px; background: var(--tick); }
+tr.model .track .band, tr.model .ztrack .band { background: color-mix(in srgb, var(--c) 38%, transparent); }
+tr.model .track .tick, tr.model .ztrack .tick { background: var(--c); }
+.sortby { display: none; }
 .na { color: var(--text-3); }
 table.board.framing { min-width: 640px; }
 .chg .num { font-weight: 700; font-size: 15px; }
 .chg .delta { font-size: 12.5px; color: var(--text-3); margin-left: 6px; }
 .chg.sig .delta { color: var(--text); font-weight: 700; }
-.ztrack { position: relative; height: 8px; border-radius: 4px; background: var(--surface-2); border: 1px solid var(--line); margin-top: 6px; }
-.ztrack .zero { position: absolute; left: 50%; top: -4px; bottom: -4px; width: 1px; background: var(--line-strong); }
-.ztrack .band { position: absolute; top: 1px; bottom: 1px; border-radius: 3px; background: var(--band); }
-.ztrack .tick { position: absolute; top: -3px; width: 3px; height: 12px; margin-left: -1.5px; border-radius: 2px; background: var(--tick); }
+.ztrack { position: relative; height: 10px; border-radius: 5px; background: var(--surface-2); border: 1px solid var(--line); margin-top: 7px; }
+.ztrack .zero { position: absolute; left: 50%; top: -5px; bottom: -5px; width: 2px; margin-left: -1px; background: var(--text-3); }
+.ztrack .band { position: absolute; top: 1px; bottom: 1px; border-radius: 4px; background: var(--band); }
+.ztrack .tick { position: absolute; top: -4px; width: 4px; height: 16px; margin-left: -2px; border-radius: 2px; background: var(--tick); }
+/* Phones: each row of a results table becomes a card with every number visible. */
+@media (max-width: 640px) {
+  .scroll.cards { overflow: visible; }
+  table.board, table.board.framing { min-width: 0; display: block; }
+  table.board thead { display: none; }
+  table.board tbody { display: block; }
+  table.board tr { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px 14px; padding: 14px 0; border-bottom: 1px solid var(--line); }
+  table.board tr:last-child { border-bottom: 0; }
+  table.board td { display: block; padding: 0; border: 0; min-width: 0; }
+  table.board td.who { grid-column: 1 / -1; }
+  table.board td.metric::before { content: attr(data-label); display: block; font-size: 11px; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase; color: var(--text-3); margin-bottom: 2px; }
+  table.board td.metric { white-space: normal; }
+  table.board td.metric .ci { display: block; margin-left: 0; }
+  table.board.framing tr { grid-template-columns: minmax(0, 1fr); }
+  .sortby { display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600; color: var(--text-2); margin-bottom: 4px; }
+  .sortby select { background: var(--surface); border: 1px solid var(--line-strong); border-radius: 9px; padding: 6px 10px; font-size: 15px; }
+}
 .framing-notes ul { margin: 14px 0 0; padding-left: 20px; }
 .framing-notes li { margin: 6px 0; }
 .framing-notes h3, .framing-notes p { display: none; }
@@ -151,6 +194,8 @@ table.board.framing { min-width: 640px; }
 .toggle button[aria-pressed="true"] { background: var(--surface); color: var(--text); box-shadow: 0 1px 2px rgba(0,0,0,0.08); }
 table.grid { border-collapse: separate; border-spacing: 3px; }
 table.grid th { font-size: 12.5px; font-weight: 600; color: var(--text-2); padding: 4px; white-space: nowrap; }
+table.grid th .dot { width: 8px; height: 8px; margin: 0 6px 0 0; }
+table.grid thead th .dot { margin: 6px 0 0; }
 table.grid thead th { height: 92px; vertical-align: bottom; }
 table.grid thead th span { display: inline-block; writing-mode: vertical-rl; transform: rotate(180deg); }
 table.grid tbody th { text-align: right; padding-right: 8px; }
@@ -231,6 +276,8 @@ footer p { max-width: 75ch; }
 </header>
 
 <main class="wrap">
+  <div class="headlines" id="headlines" aria-label="Headline findings"></div>
+
   <section class="card" aria-labelledby="game-h">
     <div class="game">
       <div>
@@ -248,8 +295,9 @@ footer p { max-width: 75ch; }
 
   <section class="card" aria-labelledby="board-h">
     <h2 id="board-h">Leaderboard</h2>
-    <p class="sub">The dark tick marks each estimate and the grey band its 95% confidence interval, from 2,000 bootstrap resamples of matches. Differences inside the bands are not findings. Click a column heading to sort.</p>
-    <div class="scroll"><table class="board" id="board"></table></div>
+    <p class="sub">The tick marks each estimate and the band around it its 95% confidence interval, from 2,000 bootstrap resamples of matches. Each model has its own colour, used across the page; bots are grey. Differences inside the bands are not findings. Click a column heading to sort.</p>
+    <label class="sortby">Sort by <select id="sortby"></select></label>
+    <div class="scroll cards"><table class="board" id="board"></table></div>
     <div class="legend">
       <span><b>Retaliates:</b> plays B in the round after the opponent played B.</span>
       <span><b>Forgives:</b> plays A in the round after retaliating.</span>
@@ -260,7 +308,7 @@ footer p { max-width: 75ch; }
   <section class="card" id="framing" aria-labelledby="framing-h" hidden>
     <h2 id="framing-h">Does naming the game change behaviour?</h2>
     <p class="sub" id="framing-sub"></p>
-    <div class="scroll"><table class="board framing" id="framing-table"></table></div>
+    <div class="scroll cards"><table class="board framing" id="framing-table"></table></div>
     <div class="legend"><span>Each cell: the rate without the name → with it, and the change in points. The bar is the change: tick at the estimate, band at its 95% paired interval, line at zero. <b>Bold</b> changes have intervals that exclude zero.</span></div>
     <div class="framing-notes" id="framing-notes"></div>
   </section>
@@ -307,6 +355,12 @@ footer p { max-width: 75ch; }
   const fix = v => v.toFixed(2);
   const label = n => (P[n] ? P[n].label : n);
   const short = n => (P[n] ? P[n].short : n);
+  // One colour per model, used everywhere a model appears; bots stay grey.
+  const MODELS = DATA.players.filter(p => p.kind === "model").map(p => p.name).sort((a, b) => label(a).localeCompare(label(b)));
+  const COLOR = Object.fromEntries(MODELS.map((n, i) => [n, "var(--m" + (i % 4 + 1) + ")"]));
+  const colorOf = n => COLOR[n] || "var(--text-3)";
+  const dot = n => (COLOR[n] ? '<span class="dot" style="--c:' + COLOR[n] + '" aria-hidden="true"></span>' : '<span class="dot bot" aria-hidden="true"></span>');
+  const rowStyle = n => (COLOR[n] ? ' style="--c:' + COLOR[n] + '"' : "");
 
   // ---------- header ----------
   const run = DATA.run;
@@ -319,6 +373,33 @@ footer p { max-width: 75ch; }
   ].filter(Boolean);
   document.getElementById("chips").innerHTML = chips.map(c => '<span class="chip">' + c[0] + "</span>").join("");
 
+  // ---------- headline findings (computed from the data, so they cannot drift) ----------
+  (function headlines() {
+    const models = DATA.players.filter(p => p.kind === "model");
+    const cards = [];
+    const fp = models.filter(p => p.fingerprints && p.fingerprints["grim-trigger"]).sort((a, b) => b.fingerprints["grim-trigger"].v - a.fingerprints["grim-trigger"].v)[0];
+    if (fp) {
+      const e = fp.fingerprints["grim-trigger"];
+      cards.push({c: COLOR[fp.name], big: pct(e.v), what: label(fp.name) + " plays like Grim Trigger",
+        more: "Its move matched the rule \u201ccooperate until betrayed, then never forgive\u201d in " + pct(e.v) + " of rounds (95% interval " + pct(e.lo) + "\u2013" + pct(e.hi) + ")."});
+    }
+    const byCoop = models.filter(p => p.cooperation).sort((a, b) => a.cooperation.v - b.cooperation.v);
+    if (byCoop.length > 1) {
+      const lo = byCoop[0], hi = byCoop[byCoop.length - 1];
+      cards.push({c: COLOR[lo.name], big: pct(lo.cooperation.v), what: label(lo.name) + " cooperates least",
+        more: "It chose A in " + pct(lo.cooperation.v) + " of its rounds, against " + pct(hi.cooperation.v) + " for " + label(hi.name) + (lo.cooperation.hi < hi.cooperation.lo ? "; the intervals do not overlap." : ".")});
+    }
+    if (DATA.framing) {
+      const rows = DATA.framing.rows.filter(r => r.cooperation);
+      const moved = rows.filter(r => Math.round(r.cooperation.lo * 100) > 0 || Math.round(r.cooperation.hi * 100) < 0).length;
+      cards.push({c: "var(--a)", big: moved + '<small>of ' + rows.length + "</small>", what: "models changed how often they cooperate when told the game's name",
+        more: "Naming it \u201cthe prisoner's dilemma\u201d left cooperation within the margin of error for " + (moved === 0 ? "every model" : (rows.length - moved) + " of them") + ".", link: ["#framing", "See the comparison"]});
+    }
+    document.getElementById("headlines").innerHTML = cards.map(c =>
+      '<div class="hl"' + (c.c ? ' style="--c:' + c.c + '"' : "") + '><div class="big">' + c.big + '</div><div class="what">' + esc(c.what) + '</div><div class="more">' + esc(c.more) + "</div>" +
+      (c.link ? '<a href="' + c.link[0] + '">' + esc(c.link[1]) + " \u2192</a>" : "") + "</div>").join("");
+  })();
+
   // ---------- leaderboard ----------
   const COLS = [
     {key: "payoff", title: "Payoff / round", max: 5, fmt: fix},
@@ -330,10 +411,10 @@ footer p { max-width: 75ch; }
   let sortKey = "payoff", sortDir = -1;
 
   function metricCell(e, col) {
-    if (!e) return '<td class="metric"><span class="na">–</span></td>';
+    if (!e) return '<td class="metric" data-label="' + col.title + '"><span class="na">–</span></td>';
     const L = Math.max(0, e.lo / col.max * 100), H = Math.min(100, e.hi / col.max * 100), V = e.v / col.max * 100;
     const ci = e.lo === e.hi ? "" : '<span class="ci">' + col.fmt(e.lo) + "–" + col.fmt(e.hi) + "</span>";
-    return '<td class="metric"><span class="num">' + col.fmt(e.v) + "</span>" + ci +
+    return '<td class="metric" data-label="' + col.title + '"><span class="num">' + col.fmt(e.v) + "</span>" + ci +
       '<div class="track" aria-hidden="true"><div class="band" style="left:' + L + "%;width:" + Math.max(H - L, 0.6) + '%"></div>' +
       '<div class="tick" style="left:' + V + '%"></div></div></td>';
   }
@@ -342,7 +423,7 @@ footer p { max-width: 75ch; }
     const sub = p.kind === "model"
       ? (p.reasoning ? p.reasoning + " reasoning effort" : "") + (p.reasoning_tokens_per_call != null ? " · ~" + p.reasoning_tokens_per_call + " thinking tokens per move" : "")
       : p.rule;
-    return '<td class="who"><b>' + esc(p.label) + '<span class="tag ' + p.kind + '">' + p.kind + "</span></b><span>" + esc(sub) + "</span></td>";
+    return '<td class="who"><b>' + dot(p.name) + esc(p.label) + '<span class="tag ' + p.kind + '">' + p.kind + "</span></b><span>" + esc(sub) + "</span></td>";
   }
 
   function renderBoard() {
@@ -354,7 +435,7 @@ footer p { max-width: 75ch; }
     const head = "<thead><tr><th>Player</th>" + COLS.map(c =>
       '<th><button type="button" data-key="' + c.key + '"' + (c.key === sortKey ? ' aria-sort="' + (sortDir < 0 ? "descending" : "ascending") + '"' : "") + ">" +
       c.title + '<span class="arrow">' + (c.key === sortKey && sortDir > 0 ? "▲" : "▼") + "</span></button></th>").join("") + "</tr></thead>";
-    const body = "<tbody>" + rows.map(p => '<tr class="' + p.kind + '">' + whoCell(p) + COLS.map(c => metricCell(p[c.key], c)).join("") + "</tr>").join("") + "</tbody>";
+    const body = "<tbody>" + rows.map(p => '<tr class="' + p.kind + '"' + rowStyle(p.name) + ">" + whoCell(p) + COLS.map(c => metricCell(p[c.key], c)).join("") + "</tr>").join("") + "</tbody>";
     const t = document.getElementById("board");
     t.innerHTML = head + body;
     t.querySelectorAll("th button").forEach(b => b.addEventListener("click", () => {
@@ -363,7 +444,11 @@ footer p { max-width: 75ch; }
       renderBoard();
       t.querySelector('th button[data-key="' + k + '"]').focus();
     }));
+    document.getElementById("sortby").value = sortKey;
   }
+  const sortSel = document.getElementById("sortby");
+  sortSel.innerHTML = COLS.map(c => '<option value="' + c.key + '">' + c.title + "</option>").join("");
+  sortSel.addEventListener("change", () => { sortKey = sortSel.value; sortDir = -1; renderBoard(); });
   renderBoard();
 
   // ---------- framing experiment ----------
@@ -377,12 +462,12 @@ footer p { max-width: 75ch; }
     const FC = [["cooperation", "Cooperates"], ["retaliation", "Retaliates"], ["forgiveness", "Forgives"]];
     const SPAN = 0.3; // the bar shows changes from -30 to +30 points
     const pos = v => Math.max(0, Math.min(100, 50 + v / SPAN * 50));
-    const cell = c => {
-      if (!c) return '<td class="metric"><span class="na">–</span></td>';
+    const cell = (c, title) => {
+      if (!c) return '<td class="metric" data-label="' + title + '"><span class="na">–</span></td>';
       const d = Math.round(c.d * 100), lo = Math.round(c.lo * 100), hi = Math.round(c.hi * 100);
       const sig = lo > 0 || hi < 0; // judged on the rounded interval, as the report prints it
       const sign = v => (v > 0 ? "+" : v < 0 ? "−" : "±") + Math.abs(v);
-      return '<td class="metric chg' + (sig ? " sig" : "") + '" title="Change ' + sign(d) + " points, 95% interval " + sign(lo) + " to " + sign(hi) + '">' +
+      return '<td class="metric chg' + (sig ? " sig" : "") + '" data-label="' + title + '" title="Change ' + sign(d) + " points, 95% interval " + sign(lo) + " to " + sign(hi) + '">' +
         '<span class="num">' + pct(c.a) + " → " + pct(c.b) + '</span><span class="delta">' + sign(d) + " pts</span>" +
         '<div class="ztrack" aria-hidden="true"><div class="band" style="left:' + pos(c.lo) + "%;width:" + Math.max(pos(c.hi) - pos(c.lo), 0.6) + '%"></div>' +
         '<div class="zero"></div><div class="tick" style="left:' + pos(c.d) + '%"></div></div></td>';
@@ -390,8 +475,8 @@ footer p { max-width: 75ch; }
     const rows = F.rows.slice().sort((a, b) => label(a.name).localeCompare(label(b.name)));
     document.getElementById("framing-table").innerHTML =
       "<thead><tr><th>Model</th>" + FC.map(c => "<th>" + c[1] + "</th>").join("") + "</tr></thead><tbody>" +
-      rows.map(r => '<tr class="model"><td class="who"><b>' + esc(label(r.name)) + "</b><span>" + r.matches + " matches in both runs</span></td>" +
-        FC.map(c => cell(r[c[0]])).join("") + "</tr>").join("") + "</tbody>";
+      rows.map(r => '<tr class="model"' + rowStyle(r.name) + '><td class="who"><b>' + dot(r.name) + esc(label(r.name)) + "</b><span>" + r.matches + " matches in both runs</span></td>" +
+        FC.map(c => cell(r[c[0]], c[1])).join("") + "</tr>").join("") + "</tbody>";
     document.getElementById("framing-notes").innerHTML = F.notes_html;
   }
 
@@ -421,9 +506,9 @@ footer p { max-width: 75ch; }
     document.getElementById("grid-sub").textContent = sub;
     document.getElementById("scale-lo").textContent = measure === "mutual" ? "0%" : "0";
     document.getElementById("scale-hi").textContent = measure === "mutual" ? "100%" : "5";
-    let h = '<thead><tr><th></th>' + order.map(n => '<th scope="col"><span>' + esc(short(n)) + "</span></th>").join("") + "</tr></thead><tbody>";
+    let h = '<thead><tr><th></th>' + order.map(n => '<th scope="col"><span>' + esc(short(n)) + "</span><br>" + dot(n) + "</th>").join("") + "</tr></thead><tbody>";
     for (const r of order) {
-      h += '<tr><th scope="row">' + esc(short(r)) + "</th>";
+      h += '<tr><th scope="row">' + dot(r) + esc(short(r)) + "</th>";
       for (const c of order) {
         let v = null, title = "";
         if (measure === "mutual") {
@@ -514,9 +599,9 @@ footer p { max-width: 75ch; }
       '<text x="' + (pad.l - 6) + '" y="' + (y(0) + 4) + '" text-anchor="end">0</text>' +
       '<text x="' + (pad.l - 6) + '" y="' + (y(maxY) + 8) + '" text-anchor="end">' + maxY + "</text>" +
       '<text x="' + (W - pad.r) + '" y="' + (H - 6) + '" text-anchor="end">round ' + n + "</text>" +
-      ref + line(tot[1], "var(--text-3)", true) + line(tot[0], "var(--text)", false) + "</svg>" +
-      '<div class="legend" style="margin-top:6px"><span><b>Running score:</b></span><span><svg width="22" height="8" class="swatch"><line x1="0" y1="4" x2="22" y2="4" stroke="var(--text)" stroke-width="2.5"/></svg>' + esc(label(m.p[0])) + "</span>" +
-      '<span><svg width="22" height="8" class="swatch"><line x1="0" y1="4" x2="22" y2="4" stroke="var(--text-3)" stroke-width="2.5" stroke-dasharray="5 4"/></svg>' + esc(m.p[0] === m.p[1] ? label(m.p[1]) + " (second seat)" : label(m.p[1])) + "</span>" +
+      ref + line(tot[1], m.p[0] === m.p[1] || !COLOR[m.p[1]] ? "var(--text-3)" : colorOf(m.p[1]), true) + line(tot[0], COLOR[m.p[0]] || "var(--text)", false) + "</svg>" +
+      '<div class="legend" style="margin-top:6px"><span><b>Running score:</b></span><span><svg width="22" height="8" class="swatch"><line x1="0" y1="4" x2="22" y2="4" stroke="' + (COLOR[m.p[0]] || "var(--text)") + '" stroke-width="2.5"/></svg>' + esc(label(m.p[0])) + "</span>" +
+      '<span><svg width="22" height="8" class="swatch"><line x1="0" y1="4" x2="22" y2="4" stroke="' + (m.p[0] === m.p[1] || !COLOR[m.p[1]] ? "var(--text-3)" : colorOf(m.p[1])) + '" stroke-width="2.5" stroke-dasharray="5 4"/></svg>' + esc(m.p[0] === m.p[1] ? label(m.p[1]) + " (second seat)" : label(m.p[1])) + "</span>" +
       '<span><svg width="22" height="8" class="swatch"><line x1="0" y1="4" x2="22" y2="4" stroke="var(--line-strong)" stroke-width="1.5" stroke-dasharray="2 4"/></svg>both always A (3 points a round)</span></div></div>';
   }
 
